@@ -1,0 +1,1975 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Yoayu - Sistema de Gestión Cooperativa</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        'yoayu-green': '#006847', /* Verde Institucional Yoayu */
+                        'yoayu-dark': '#004d35',
+                        'yoayu-light': '#e6f0ed',
+                        'apex-header': '#f2f2f2',
+                        'apex-border': '#dce1e5',
+                        'success-green': '#059669', // Verde para botones de éxito
+                    },
+                    fontFamily: { sans: ['Segoe UI', 'Inter', 'system-ui', 'sans-serif'] } /* Fuente similar a APEX */
+                }
+            }
+        }
+    </script>
+    <style>
+        body { background-color: #f0f2f5; font-family: 'Segoe UI', 'Inter', sans-serif; color: #1f2937; }
+       
+        /* Estilos tipo Oracle APEX Universal Theme */
+        .sidebar { background-color: #006847; background-image: linear-gradient(180deg, #006847 0%, #004d35 100%); }
+        .nav-item { border-radius: 4px; color: rgba(255,255,255,0.9); }
+        .nav-item:hover { background-color: rgba(255,255,255,0.1); color: white; }
+        .nav-item.active-link { background-color: rgba(255,255,255,0.2); border-left: 4px solid #FFC300; font-weight: 600; }
+       
+        .card { background: white; border: 1px solid #dce1e5; border-radius: 4px; box-shadow: 0 1px 2px rgba(0,0,0,0.05); }
+        .card-header { background-color: transparent; border-bottom: 1px solid #dce1e5; padding: 12px 16px; font-weight: 600; color: #333; font-size: 1rem; }
+       
+        /* Inputs estilo APEX */
+        input, select, textarea { border: 1px solid #dfdfdf; border-radius: 2px; transition: border-color 0.2s, box-shadow 0.2s; font-size: 0.875rem; height: 2.5rem; padding: 0.25rem 0.5rem; }
+        input:focus, select:focus, textarea:focus { border-color: #006847; outline: none; box-shadow: 0 0 0 1px rgba(0, 104, 71, 0.2); }
+        label { color: #555; font-weight: 600; font-size: 0.75rem; margin-bottom: 0.25rem; display: block; }
+        .required-asterisk { color: #dc2626; margin-left: 2px; }
+
+        .btn-apex-primary { background-color: #006847; color: white; border-radius: 2px; font-weight: 500; transition: background-color 0.2s; box-shadow: 0 1px 2px rgba(0,0,0,0.1); display: inline-flex; align-items: center; justify-content: center; height: 2.5rem; padding: 0 1rem; }
+        .btn-apex-primary:hover { background-color: #005a3e; }
+       
+        .btn-apex-success { background-color: #10b981; color: white; border-radius: 2px; font-weight: 600; transition: background-color 0.2s; box-shadow: 0 1px 2px rgba(0,0,0,0.1); height: 2.5rem; padding: 0 1.5rem; }
+        .btn-apex-success:hover { background-color: #059669; }
+
+        .tab-button { color: #666; border-bottom: 2px solid transparent; }
+        .tab-button.active-tab { color: #006847; border-bottom-color: #006847; font-weight: 700; }
+
+        .view-content:not(.active) { display: none; }
+        .hidden-section { display: none; }
+
+        /* Breadcrumbs */
+        .breadcrumb { font-size: 0.75rem; color: #0066cc; margin-bottom: 0.5rem; }
+        .breadcrumb span { color: #666; }
+
+        /* Modal Backdrop */
+        .modal-backdrop { background-color: rgba(0, 0, 0, 0.5); z-index: 50; }
+
+        /* --- AJUSTE 1: SCROLL SUTIL --- */
+        /* Estilo de scroll moderno para WebKit (Chrome, Edge, Safari) */
+        ::-webkit-scrollbar {
+            width: 8px; /* Ancho sutil */
+            height: 8px; /* Alto sutil para scroll horizontal */
+            background-color: transparent; /* Fondo transparente, sin "borde blanco" */
+        }
+        ::-webkit-scrollbar-track {
+            background: transparent;
+        }
+        ::-webkit-scrollbar-thumb {
+            background: #c1c1c1; /* Color de la barra, gris sutil */
+            border-radius: 10px; /* Bordes redondeados */
+        }
+        ::-webkit-scrollbar-thumb:hover {
+            background: #a8a8a8; /* Color al pasar el mouse */
+        }
+        /* Estilo para Firefox */
+        html {
+            scrollbar-width: thin; /* Scroll delgado */
+            scrollbar-color: #c1c1c1 transparent; /* Barra gris, fondo transparente */
+        }
+    </style>
+</head>
+<body>
+
+<div class="flex h-screen overflow-hidden">
+
+    <!-- Sidebar Estilo APEX -->
+    <div class="sidebar w-64 flex-shrink-0 flex flex-col justify-between hidden md:flex shadow-xl z-20">
+        <div class="p-4">
+            <!-- Logo Area -->
+            <div class="flex items-center justify-center mb-8 p-2 bg-white/10 rounded">
+                <img src="image_0c3875.png" alt="Yoayu Logo" class="h-12 w-auto object-contain" onerror="this.style.display='none'; this.nextElementSibling.style.display='block'">
+                <h1 class="text-2xl font-bold text-white hidden ml-2 tracking-wide" style="display:none">YOAYU</h1>
+            </div>
+
+            <nav class="space-y-1 text-sm overflow-y-auto max-h-[calc(100vh-200px)]">
+                <a href="#" class="nav-item flex items-center px-3 py-3 transition duration-150 active-link" data-view="dashboard" onclick="switchView('dashboard')">
+                    <svg class="w-5 h-5 mr-3 opacity-80" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2V6zM14 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V6zM4 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2v-2zM14 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z"></path></svg>
+                    Panel Principal
+                </a>
+               
+                <div class="pt-4 pb-1 pl-3 text-xs uppercase text-green-200/60 font-bold tracking-wider">Operaciones de Caja</div>
+                <a href="#" class="nav-item flex items-center px-3 py-3 transition duration-150" data-view="apertura" onclick="switchView('apertura')">
+                    <svg class="w-5 h-5 mr-3 opacity-80" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"></path></svg>
+                    Apertura de Caja
+                </a>
+                <a href="#" class="nav-item flex items-center px-3 py-3 transition duration-150" data-view="caja" onclick="switchView('caja')">
+                    <svg class="w-5 h-5 mr-3 opacity-80" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 9V7a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2m2 4h10a2 2 0 002-2v-6a2 2 0 00-2-2H9a2 2 0 00-2 2v6a2 2 0 002 2zm7-5a2 2 0 11-4 0 2 2 0 014 0z"></path></svg>
+                    Movimientos (Caja)
+                </a>
+                <a href="#" class="nav-item flex items-center px-3 py-3 transition duration-150" data-view="cierre" onclick="switchView('cierre')">
+                    <svg class="w-5 h-5 mr-3 opacity-80" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4"></path></svg>
+                    Arqueo y Cierre
+                </a>
+               
+                <div class="pt-4 pb-1 pl-3 text-xs uppercase text-green-200/60 font-bold tracking-wider">Consultas</div>
+                <a href="#" class="nav-item flex items-center px-3 py-3 transition duration-150" data-view="obligaciones" onclick="switchView('obligaciones')">
+                    <svg class="w-5 h-5 mr-3 opacity-80" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path></svg>
+                    Consulta Obligaciones
+                </a>
+                <a href="#" class="nav-item flex items-center px-3 py-3 transition duration-150" data-view="reportes" onclick="switchView('reportes')">
+                    <svg class="w-5 h-5 mr-3 opacity-80" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 8v8m-4-5v5m-4-2v2m-2 4h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v10a2 2 0 002 2z"></path></svg>
+                    Reportes y Resumen
+                </a>
+
+                 <!-- SECCIÓN JEFE DE TESORERÍA (AÑADIDA) -->
+                 <div class="pt-4 pb-1 pl-3 text-xs uppercase text-yellow-300/80 font-bold tracking-wider border-t border-white/10 mt-2">Jefe de Tesorería</div>
+                 <a href="#" class="nav-item flex items-center px-3 py-3 transition duration-150" data-view="tesoreria" onclick="switchView('tesoreria')">
+                     <svg class="w-5 h-5 mr-3 opacity-80 text-yellow-300" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"></path></svg>
+                     <span class="text-yellow-100 font-bold">Monitor de Cajas</span>
+                 </a>
+
+                <div class="pt-4 pb-1 pl-3 text-xs uppercase text-green-200/60 font-bold tracking-wider">Mantenimientos</div>
+                <a href="#" class="nav-item flex items-center px-3 py-3 transition duration-150" data-view="mant-cajas" onclick="switchView('mant-cajas')">
+                    <svg class="w-5 h-5 mr-3 opacity-80" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path></svg>
+                    Cajas
+                </a>
+                <a href="#" class="nav-item flex items-center px-3 py-3 transition duration-150" data-view="assign-cajas" onclick="switchView('assign-cajas')">
+                    <svg class="w-5 h-5 mr-3 opacity-80" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M18 9v3m0 0v3m0-3h3m-3 0h-3m-2-5a4 4 0 11-8 0 4 4 0 018 0zM3 20a6 6 0 0112 0v1H3v-1z"></path></svg>
+                    Asignación de Cajas
+                </a>
+            </nav>
+        </div>
+        <div class="p-4 bg-yoayu-dark/30 border-t border-yoayu-dark/50">
+            <div class="flex items-center">
+                <div class="w-2 h-2 rounded-full bg-red-400 mr-2 shadow-[0_0_5px_rgba(248,113,113,0.8)]" id="status-indicator-sidebar"></div>
+                <span id="status-text-sidebar" class="text-xs text-red-100 font-medium">Caja Cerrada</span>
+            </div>
+            <div class="text-xs text-green-200/70 mt-1">Caja: 01 | Cajero: JP</div>
+        </div>
+    </div>
+
+    <!-- Contenido Principal -->
+    <div class="flex-1 flex flex-col h-screen overflow-hidden bg-[#f2f2f2]">
+        <!-- Header Universal APEX -->
+        <header class="bg-white shadow-sm h-14 flex items-center justify-between px-6 z-10 border-b border-gray-200">
+            <h2 id="page-title" class="text-lg font-bold text-gray-700 tracking-tight">Panel Principal</h2>
+            <div class="flex items-center space-x-4">
+                <div class="text-right hidden md:block leading-tight">
+                    <p class="text-xs font-bold text-gray-600 uppercase" id="header-date">--</p>
+                    <p class="text-[10px] text-gray-400" id="header-status">Turno Abierto</p>
+                </div>
+                <div class="w-8 h-8 bg-yoayu-green text-white rounded-full flex items-center justify-center font-bold text-xs shadow-sm">JP</div>
+            </div>
+        </header>
+
+        <main class="flex-1 overflow-y-auto p-4 md:p-6 space-y-6">
+           
+            <!-- DASHBOARD -->
+            <section id="dashboard-view" class="view-content active space-y-6">
+                <!-- Tarjeta de Estado de Caja CON BIENVENIDA -->
+                <div class="card p-6 border-l-4 border-l-red-500 flex justify-between items-center transition-colors duration-300" id="dash-status-card">
+                    <div>
+                        <!-- NUEVA LÍNEA DE BIENVENIDA -->
+                        <h4 class="text-lg text-gray-600 font-medium mb-1">Bienvenido, <span class="font-bold text-gray-800">Juan Perez</span></h4>
+                       
+                        <h3 class="text-base font-bold text-gray-700 flex items-center mt-1">
+                            Estado de Caja:
+                            <span id="dash-estado-text" class="ml-2 text-red-500 font-extrabold tracking-wide">CERRADA</span>
+                        </h3>
+                        <p class="text-sm text-gray-500 mt-1">Terminal: 01 | Sucursal: Casa Matriz</p>
+                    </div>
+                    <div class="text-right">
+                        <p class="text-xs font-semibold text-gray-500 uppercase">Saldo Actual Estimado</p>
+                        <p class="text-2xl font-bold text-yoayu-green" id="dash-saldo-actual">Gs. 0</p>
+                    </div>
+                </div>
+
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+                    <div onclick="switchView('apertura')" class="card p-6 cursor-pointer hover:shadow-md transition-shadow border-t-4 border-t-blue-500 flex flex-col items-center text-center justify-center h-40">
+                        <div class="bg-blue-50 p-3 rounded-full mb-3 text-blue-600">
+                            <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"></path></svg>
+                            <span class="sr-only">Abrir Caja</span>
+                        </div>
+                        <h4 class="font-bold text-sm text-gray-700">Apertura de Caja</h4>
+                    </div>
+                    <div onclick="switchView('caja')" class="card p-6 cursor-pointer hover:shadow-md transition-shadow border-t-4 border-t-yoayu-green flex flex-col items-center text-center justify-center h-40">
+                        <div class="bg-green-50 p-3 rounded-full mb-3 text-yoayu-green">
+                            <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+                            <span class="sr-only">Movimientos de Caja</span>
+                        </div>
+                        <h4 class="font-bold text-sm text-gray-700">Movimientos de Caja</h4>
+                    </div>
+                    <div onclick="switchView('cierre')" class="card p-6 cursor-pointer hover:shadow-md transition-shadow border-t-4 border-t-orange-500 flex flex-col items-center text-center justify-center h-40">
+                        <div class="bg-orange-50 p-3 rounded-full mb-3 text-orange-600">
+                            <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+                            <span class="sr-only">Arqueo y Cierre</span>
+                        </div>
+                        <h4 class="font-bold text-sm text-gray-700">Arqueo y Cierre</h4>
+                    </div>
+                </div>
+            </section>
+
+             <!-- MANTENIMIENTO CAJAS (LISTADO) -->
+             <section id="mant-cajas-view" class="view-content">
+                 <!-- Contenido de Mantenimiento Cajas (Sin cambios) -->
+                <div class="mb-4 breadcrumb flex items-center text-gray-500 text-xs uppercase tracking-wide">
+                    <span>Inicio</span><svg class="w-3 h-3 mx-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path></svg>
+                    <span>Tesoreria</span><svg class="w-3 h-3 mx-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path></svg>
+                    <span>Mantenimientos</span><svg class="w-3 h-3 mx-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path></svg>
+                    <span class="text-yoayu-green font-bold">Cajas</span>
+                </div>
+                <div class="card overflow-hidden shadow-lg border-0 rounded-lg">
+                    <div class="bg-white p-6 border-b flex flex-col md:flex-row justify-between items-center gap-4">
+                        <h3 class="text-xl font-bold text-gray-700 flex items-center"><span class="w-2 h-8 bg-yoayu-green rounded-full mr-3"></span>Administración de Cajas</h3>
+                        <button onclick="showCajasForm()" class="btn-apex-success bg-[#00aa00] hover:bg-[#008800] shadow-md hover:shadow-lg transform transition hover:-translate-y-0.5 px-6 py-2.5 rounded-full flex items-center"><svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path></svg>Nueva Caja</button>
+                    </div>
+                    <div class="p-6 bg-gray-50 border-b">
+                        <div class="grid grid-cols-1 md:grid-cols-4 gap-4 items-end">
+                            <div class="md:col-span-3">
+                                <label class="text-xs uppercase font-bold text-gray-400 mb-2">Búsqueda Rápida</label>
+                                <div class="relative"><input type="text" id="filter-cajas-search" class="w-full pl-10 h-11 border-gray-300 rounded-lg focus:ring-2 focus:ring-yoayu-green focus:border-transparent transition-all" placeholder="Buscar por código, descripción o sucursal..."><svg class="w-5 h-5 text-gray-400 absolute left-3 top-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path></svg></div>
+                            </div>
+                            <div class="flex gap-2"><button class="h-11 px-6 bg-white border border-gray-300 text-gray-600 rounded-lg hover:bg-gray-50 hover:text-yoayu-green font-medium transition-colors w-full">Limpiar</button><button class="h-11 px-6 bg-yoayu-dark text-white rounded-lg hover:bg-yoayu-green font-medium transition-colors w-full shadow-sm">Filtrar</button></div>
+                        </div>
+                    </div>
+                    <div class="overflow-x-auto">
+                        <table class="w-full text-left border-collapse">
+                            <thead><tr class="bg-white border-b border-gray-100"><th class="p-4 text-xs font-bold text-gray-400 uppercase tracking-wider">Id</th><th class="p-4 text-xs font-bold text-gray-400 uppercase tracking-wider">Código</th><th class="p-4 text-xs font-bold text-gray-400 uppercase tracking-wider">Descripción</th><th class="p-4 text-xs font-bold text-gray-400 uppercase tracking-wider">Tipo</th><th class="p-4 text-xs font-bold text-gray-400 uppercase tracking-wider">Moneda</th><th class="p-4 text-xs font-bold text-gray-400 uppercase tracking-wider text-right">Min. Apertura</th><th class="p-4 text-xs font-bold text-gray-400 uppercase tracking-wider">Sucursal</th><th class="p-4 text-xs font-bold text-gray-400 uppercase tracking-wider text-center">Estado</th><th class="p-4 text-xs font-bold text-gray-400 uppercase tracking-wider text-center">Acciones</th></tr></thead>
+                            <tbody id="cajas-table-body" class="divide-y divide-gray-50"></tbody>
+                        </table>
+                    </div>
+                </div>
+             </section>
+
+             <!-- MANTENIMIENTO CAJAS (FORMULARIO AGREGAR/EDITAR) -->
+             <section id="mant-cajas-form-view" class="view-content hidden-section">
+                 <!-- Formulario Cajas (Sin cambios) -->
+                <div class="mb-4 breadcrumb flex items-center text-gray-500 text-xs uppercase tracking-wide"><span>Inicio</span>...<span class="text-yoayu-green font-bold" id="form-caja-title-crumb">Editar</span></div>
+                <div class="card overflow-hidden shadow-lg border-0 rounded-lg">
+                    <div class="bg-yoayu-green p-4 flex justify-between items-center"><h3 class="text-lg font-bold text-white flex items-center" id="form-caja-header-title">GESTIÓN DE CAJA</h3></div>
+                    <div class="p-8 bg-white">
+                        <input type="hidden" id="form-caja-id">
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-x-12 gap-y-8 max-w-6xl mx-auto">
+                            <div class="space-y-6">
+                                <div><label class="mb-1 text-gray-600 font-semibold text-xs uppercase tracking-wider">Código <span class="required-asterisk">*</span></label><div class="flex items-center gap-2"><div class="relative w-full"><div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-gray-400 font-bold">#</div><input type="text" id="form-caja-codigo" class="w-full pl-8 h-10 border-gray-300 focus:ring-yoayu-green focus:border-yoayu-green rounded bg-gray-50 font-mono font-medium" placeholder="001"></div><span class="text-xs text-gray-400 w-32">** Punto Exp.</span></div></div>
+                                <div><label class="mb-1 text-gray-600 font-semibold text-xs uppercase tracking-wider">Tipo de Caja <span class="required-asterisk">*</span></label><select id="form-caja-tipo" class="w-full h-10 border-gray-300 focus:ring-yoayu-green focus:border-yoayu-green rounded"><option>Caja Normal</option><option>Caja Chica</option><option>Recaudadora</option></select></div>
+                                <div><label class="mb-1 text-gray-600 font-semibold text-xs uppercase tracking-wider">Importe Mín. Apertura <span class="required-asterisk">*</span></label><div class="relative"><input type="text" id="form-caja-min" class="w-full h-10 pr-8 text-right font-bold text-gray-700 border-gray-300 focus:ring-yoayu-green focus:border-yoayu-green rounded" placeholder="0"><span class="absolute right-3 top-2.5 text-xs text-gray-400">Gs</span></div></div>
+                                <div><label class="mb-1 text-gray-600 font-semibold text-xs uppercase tracking-wider">Estado <span class="required-asterisk">*</span></label><div class="flex items-center gap-4 mt-2"><label class="inline-flex items-center"><input type="radio" name="caja_estado" value="Activo" class="form-radio text-yoayu-green focus:ring-yoayu-green h-4 w-4" checked><span class="ml-2 text-sm text-gray-700">Activo</span></label><label class="inline-flex items-center"><input type="radio" name="caja_estado" value="Inactivo" class="form-radio text-gray-400 focus:ring-gray-400 h-4 w-4"><span class="ml-2 text-sm text-gray-500">Inactivo</span></label></div></div>
+                            </div>
+                            <div class="space-y-6">
+                                <div><label class="mb-1 text-gray-600 font-semibold text-xs uppercase tracking-wider">Descripción <span class="required-asterisk">*</span></label><input type="text" id="form-caja-desc" class="w-full h-10 border-gray-300 focus:ring-yoayu-green focus:border-yoayu-green rounded" placeholder="Ej: CAJA CENTRAL 1"></div>
+                                <div><label class="mb-1 text-gray-600 font-semibold text-xs uppercase tracking-wider">Moneda <span class="required-asterisk">*</span></label><select id="form-caja-moneda" class="w-full h-10 border-gray-300 focus:ring-yoayu-green focus:border-yoayu-green rounded bg-yellow-50/30"><option>PYG - Guarani</option><option>USD - Dolar</option></select></div>
+                                <div class="grid grid-cols-2 gap-4"><div><label class="mb-1 text-gray-600 font-semibold text-xs uppercase tracking-wider">Sucursal</label><select id="form-caja-sucursal" class="w-full h-10 border-gray-300 focus:ring-yoayu-green focus:border-yoayu-green rounded text-sm"><option>Casa Matriz</option><option>Agencia 1</option></select></div><div><label class="mb-1 text-gray-600 font-semibold text-xs uppercase tracking-wider">Agencia</label><select id="form-caja-agencia" class="w-full h-10 border-gray-300 focus:ring-yoayu-green focus:border-yoayu-green rounded text-sm"><option>Agencia Casa Matriz</option></select></div></div>
+                            </div>
+                        </div>
+                        <div class="mt-10 p-4 bg-gray-50 rounded border border-gray-100 flex justify-between items-center"><span class="text-xs text-red-500 font-semibold flex items-center">(*) Campos requeridos</span><div class="flex gap-3"><button onclick="cancelCaja()" class="px-6 py-2.5 rounded text-gray-600 font-medium hover:bg-gray-200 transition-colors">Cancelar</button><button onclick="saveCaja()" class="px-8 py-2.5 rounded bg-yoayu-green text-white font-bold hover:bg-yoayu-dark shadow-md hover:shadow-lg transition-all transform hover:-translate-y-0.5 flex items-center">Guardar Cambios</button></div></div>
+                    </div>
+                </div>
+             </section>
+
+             <!-- ASIGNACIÓN DE CAJAS (LISTADO) -->
+             <section id="assign-cajas-view" class="view-content hidden-section">
+                 <!-- Listado Asignaciones (Sin cambios) -->
+                <div class="mb-4 breadcrumb flex items-center text-gray-500 text-xs uppercase tracking-wide"><span>Inicio</span>...<span class="text-yoayu-green font-bold">Asignación de Cajas</span></div>
+                <div class="card overflow-hidden shadow-lg border-0 rounded-lg">
+                    <div class="bg-white p-6 border-b flex flex-col md:flex-row justify-between items-center gap-4">
+                        <h3 class="text-xl font-bold text-gray-700 flex items-center"><span class="w-2 h-8 bg-yoayu-green rounded-full mr-3"></span>Asignación de Cajas</h3>
+                        <button onclick="showAssignForm()" class="btn-apex-success bg-[#00aa00] hover:bg-[#008800] shadow-md hover:shadow-lg transform transition hover:-translate-y-0.5 px-6 py-2.5 rounded-full flex items-center"><svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M18 9v3m0 0v3m0-3h3m-3 0h-3m-2-5a4 4 0 11-8 0 4 4 0 018 0zM3 20a6 6 0 0112 0v1H3v-1z"></path></svg>Nueva Asignación</button>
+                    </div>
+                    <div class="overflow-x-auto"><table class="w-full text-left border-collapse"><thead><tr class="bg-white border-b border-gray-100"><th class="p-4 text-xs font-bold text-gray-400 uppercase tracking-wider">Id</th><th class="p-4 text-xs font-bold text-gray-400 uppercase tracking-wider">Sucursal</th><th class="p-4 text-xs font-bold text-gray-400 uppercase tracking-wider">Agencia</th><th class="p-4 text-xs font-bold text-gray-400 uppercase tracking-wider">Código</th><th class="p-4 text-xs font-bold text-gray-400 uppercase tracking-wider">Caja</th><th class="p-4 text-xs font-bold text-gray-400 uppercase tracking-wider">Tipo de Caja</th><th class="p-4 text-xs font-bold text-gray-400 uppercase tracking-wider">Cajero Asignado</th><th class="p-4 text-xs font-bold text-gray-400 uppercase tracking-wider text-center">Estado</th><th class="p-4 text-xs font-bold text-gray-400 uppercase tracking-wider text-center">Acciones</th></tr></thead><tbody id="assign-table-body" class="divide-y divide-gray-50"></tbody></table></div>
+                </div>
+             </section>
+
+             <!-- ASIGNACIÓN DE CAJAS (FORMULARIO) -->
+             <section id="assign-cajas-form-view" class="view-content hidden-section">
+                 <!-- Formulario Asignaciones (Sin cambios) -->
+                 <div class="mb-4 breadcrumb flex items-center text-gray-500 text-xs uppercase tracking-wide"><span>Inicio</span>...<span class="text-yoayu-green font-bold" id="form-assign-title-crumb">Editar</span></div>
+                 <div class="card overflow-hidden shadow-lg border-0 rounded-lg">
+                    <div class="bg-yoayu-green p-4 flex justify-between items-center"><h3 class="text-lg font-bold text-white flex items-center" id="form-assign-header-title">ASIGNAR CAJA</h3></div>
+                    <div class="p-8 bg-white">
+                        <input type="hidden" id="form-assign-id">
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-x-12 gap-y-8 max-w-6xl mx-auto">
+                            <div class="space-y-6">
+                                <div><label class="mb-1 text-gray-600 font-semibold text-xs uppercase tracking-wider">Sucursal <span class="required-asterisk">*</span></label><input type="text" id="assign-sucursal" value="Casa Matriz" readonly class="w-full h-10 bg-gray-50 border-gray-300 rounded text-sm text-gray-600 focus:ring-0"></div>
+                                <div><label class="mb-1 text-gray-600 font-semibold text-xs uppercase tracking-wider">Agencia <span class="required-asterisk">*</span></label><select id="assign-agencia" class="w-full h-10 border-gray-300 rounded text-sm"><option>Agencia Casa Matriz</option></select></div>
+                                <div><label class="mb-1 text-gray-600 font-semibold text-xs uppercase tracking-wider">Caja <span class="required-asterisk">*</span></label><select id="assign-caja-select" onchange="updateAssignDetails()" class="w-full h-10 border-gray-300 rounded text-sm"><option value="">-- Seleccione Caja --</option></select></div>
+                                <div><label class="mb-1 text-gray-600 font-semibold text-xs uppercase tracking-wider">Cajero <span class="required-asterisk">*</span></label><select id="assign-cajero" class="w-full h-10 border-gray-300 rounded text-sm"><option value="">-- Seleccione Cajero --</option><option>Juan Perez</option><option>Maria Lopez</option></select></div>
+                                <div><label class="mb-1 text-gray-600 font-semibold text-xs uppercase tracking-wider">Fecha Asignación <span class="required-asterisk">*</span></label><input type="datetime-local" id="assign-fecha" class="w-full h-10 border-gray-300 rounded text-sm"></div>
+                            </div>
+                            <div class="space-y-6">
+                                <div><label class="mb-1 text-gray-600 font-semibold text-xs uppercase tracking-wider">Tipo de Caja</label><input type="text" id="assign-tipo" readonly class="w-full h-10 bg-gray-100 border-gray-300 rounded text-sm text-gray-600"></div>
+                                <div><label class="mb-1 text-gray-600 font-semibold text-xs uppercase tracking-wider">Importe de Apertura <span class="required-asterisk">*</span></label><div class="relative"><input type="text" id="assign-importe" class="w-full h-10 pr-8 text-right font-bold text-gray-700 border-gray-300 focus:ring-yoayu-green focus:border-yoayu-green rounded" placeholder="0"><span class="absolute right-3 top-2.5 text-xs text-gray-400">Gs</span></div></div>
+                                <div><label class="mb-1 text-gray-600 font-semibold text-xs uppercase tracking-wider">Observación</label><textarea id="assign-obs" class="w-full border-gray-300 rounded h-24 p-2 text-sm"></textarea></div>
+                                <div><label class="mb-1 text-gray-600 font-semibold text-xs uppercase tracking-wider">Estado <span class="required-asterisk">*</span></label><div class="flex items-center gap-4 mt-2"><label class="inline-flex items-center"><input type="radio" name="assign_estado" value="Activo" class="form-radio text-yoayu-green focus:ring-yoayu-green h-4 w-4" checked><span class="ml-2 text-sm text-gray-700">Activo</span></label></div></div>
+                            </div>
+                        </div>
+                        <div class="mt-10 p-4 bg-gray-50 rounded border border-gray-100 flex justify-between items-center"><span class="text-xs text-red-500 font-semibold flex items-center">(*) Campos requeridos</span><div class="flex gap-3"><button onclick="cancelAssign()" class="px-6 py-2.5 rounded text-gray-600 font-medium hover:bg-gray-200 transition-colors">Cancelar</button><button onclick="saveAssignment()" class="px-8 py-2.5 rounded bg-yoayu-green text-white font-bold hover:bg-yoayu-dark shadow-md hover:shadow-lg transition-all transform hover:-translate-y-0.5 flex items-center">Guardar Cambios</button></div></div>
+                    </div>
+                 </div>
+             </section>
+
+             <!-- *** NUEVA SECCIÓN: PANEL DE TESORERÍA (AGREGADA DE NUEVO) *** -->
+            <section id="tesoreria-view" class="view-content">
+                <div class="mb-4 breadcrumb flex items-center text-gray-500 text-xs uppercase tracking-wide">
+                    <span>Inicio</span>
+                    <svg class="w-3 h-3 mx-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path></svg>
+                    <span>Jefe de Tesorería</span>
+                    <svg class="w-3 h-3 mx-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path></svg>
+                    <span class="text-yoayu-green font-bold">Monitor de Cajas</span>
+                </div>
+
+                <div class="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
+                    <div class="card p-4 border-l-4 border-yellow-500 shadow-sm">
+                        <div class="flex justify-between items-start">
+                            <div><p class="text-xs text-gray-500 uppercase font-bold">Total en Cajas</p><h3 class="text-2xl font-bold text-gray-800" id="tes-total-cajas">Gs. 0</h3></div>
+                            <div class="p-2 bg-yellow-50 rounded text-yellow-600"><svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg></div>
+                        </div>
+                    </div>
+                    <div class="card p-4 border-l-4 border-green-500 shadow-sm">
+                        <div class="flex justify-between items-start">
+                            <div><p class="text-xs text-gray-500 uppercase font-bold">Cajas Abiertas</p><h3 class="text-2xl font-bold text-green-600" id="tes-count-open">0</h3></div>
+                            <div class="p-2 bg-green-50 rounded text-green-600"><svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path></svg></div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="card overflow-hidden shadow-lg border-0 rounded-lg">
+                    <div class="bg-gradient-to-r from-gray-800 to-gray-700 p-4 flex justify-between items-center">
+                        <h3 class="text-lg font-bold text-white flex items-center">
+                            <svg class="w-5 h-5 mr-2 text-yellow-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"></path></svg>
+                            Panel de Control de Cajas - Tiempo Real
+                        </h3>
+                        <div class="flex gap-2">
+                             <button onclick="renderTesoreriaTable()" class="text-xs bg-gray-600 hover:bg-gray-500 text-white px-3 py-1 rounded flex items-center transition-colors"><svg class="w-3 h-3 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"></path></svg>Actualizar</button>
+                        </div>
+                    </div>
+                   
+                    <div class="overflow-x-auto">
+                        <table class="w-full text-left border-collapse">
+                            <thead>
+                                <tr class="bg-gray-50 border-b border-gray-200">
+                                    <th class="p-4 text-xs font-bold text-gray-500 uppercase tracking-wider">Caja</th>
+                                    <th class="p-4 text-xs font-bold text-gray-500 uppercase tracking-wider">Cajero Responsable</th>
+                                    <th class="p-4 text-xs font-bold text-gray-500 uppercase tracking-wider text-center">Estado</th>
+                                    <th class="p-4 text-xs font-bold text-gray-500 uppercase tracking-wider text-right">Saldo Actual (Est.)</th>
+                                    <th class="p-4 text-xs font-bold text-gray-500 uppercase tracking-wider text-center">Acciones Críticas</th>
+                                </tr>
+                            </thead>
+                            <tbody id="tesoreria-table-body" class="divide-y divide-gray-100 bg-white">
+                                <!-- JS Populated -->
+                            </tbody>
+                        </table>
+                    </div>
+                    <div class="p-3 bg-yellow-50 border-t border-yellow-100 text-xs text-yellow-800 flex items-center">
+                        <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+                        Nota: Las acciones de apertura/cierre forzado quedarán registradas en el log de auditoría del sistema.
+                    </div>
+                </div>
+            </section>
+
+            <!-- APERTURA (Vista existente) -->
+            <section id="apertura-view" class="view-content">
+                <div class="card overflow-hidden border border-gray-300 shadow-md">
+                    <div class="bg-yoayu-green p-3"><h3 class="text-white font-bold text-lg">APERTURA DE CAJA</h3></div>
+                    <div class="p-8 bg-white">
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-x-12 gap-y-6 max-w-5xl">
+                            <!-- Left Col -->
+                            <div class="space-y-4">
+                                <div class="grid grid-cols-3 gap-4 items-center"><label class="col-span-1 text-gray-600 text-sm">Sucursal <span class="text-red-500">*</span></label><select class="col-span-2 w-full h-10 border-gray-300 rounded text-sm px-2 bg-gray-50" disabled><option>Casa Matriz</option></select></div>
+                                <div class="grid grid-cols-3 gap-4 items-center"><label class="col-span-1 text-gray-600 text-sm">Agencia <span class="text-red-500">*</span></label><select class="col-span-2 w-full h-10 border-gray-300 rounded text-sm px-2 bg-gray-50" disabled><option>1 - Agencia Casa Central</option></select></div>
+                                <div class="grid grid-cols-3 gap-4 items-center"><label class="col-span-1 text-gray-600 text-sm">Caja <span class="text-red-500">*</span></label><select class="col-span-2 w-full h-10 border-gray-300 rounded text-sm px-2 focus:ring-yoayu-green"><option>001- Caja central</option></select></div>
+                                <div class="grid grid-cols-3 gap-4 items-center"><label class="col-span-1 text-gray-600 text-sm">Moneda <span class="text-red-500">*</span></label><input type="text" value="PYG - Guarani" disabled class="col-span-2 w-full h-10 bg-gray-300 border-gray-400 rounded text-sm text-gray-700 px-2 font-semibold"></div>
+                                <div class="grid grid-cols-3 gap-4 items-center"><label class="col-span-1 text-gray-600 text-sm">Fecha Apertura <span class="text-red-500">*</span></label><input type="datetime-local" id="apertura-fecha-input" class="col-span-2 w-full h-10 border-gray-300 rounded text-sm px-2 focus:ring-yoayu-green"></div>
+                            </div>
+                            <!-- Right Col -->
+                            <div class="space-y-4">
+                                <div class="grid grid-cols-3 gap-4 items-center"><label class="col-span-1 text-gray-600 text-sm text-right pr-4">Tipo de Caja</label><input type="text" value="Caja Chica" disabled class="col-span-2 w-full h-10 bg-gray-300 border-gray-400 rounded text-sm text-gray-700 px-2"></div>
+                                <div class="grid grid-cols-3 gap-4 items-center"><label class="col-span-1 text-gray-600 text-sm text-right pr-4">Importe de Apertura <span class="text-red-500">*</span></label><input type="text" id="monto-apertura-input" value="50.000.000" disabled class="col-span-2 w-full h-10 bg-gray-300 border-gray-400 rounded text-right font-bold text-gray-800 px-2 text-base"></div>
+                            </div>
+                        </div>
+                        <div class="mt-6 grid grid-cols-12 gap-4 items-center max-w-5xl"><label class="col-span-2 text-gray-600 text-sm">Observación</label><textarea class="col-span-10 w-full border-gray-300 rounded h-20 p-2 text-sm focus:ring-yoayu-green"></textarea></div>
+                        <div class="mt-4 grid grid-cols-12 gap-4 items-center max-w-5xl"><label class="col-span-2 text-gray-600 text-sm">Estado</label><input type="text" value="Activo" disabled class="col-span-3 w-full h-10 bg-gray-50 border-gray-300 rounded text-sm text-gray-600 px-2"></div>
+                        <div class="mt-8"><span class="text-red-500 text-sm">(*) Campos obligatorios</span></div>
+                        <div class="mt-6 flex justify-end gap-4 border-t pt-4">
+                            <button onclick="realizarApertura()" class="bg-[#5e35b1] hover:bg-[#4527a0] text-white font-bold py-2 px-8 rounded shadow-md transition-colors uppercase text-sm">ABRIR CAJA</button>
+                            <button onclick="switchView('dashboard')" class="bg-[#5cb85c] hover:bg-[#4cae4c] text-white font-bold py-2 px-8 rounded shadow-md transition-colors uppercase text-sm">CANCELAR</button>
+                        </div>
+                    </div>
+                </div>
+                <div id="apertura-info" class="hidden text-center py-10 card mt-4">
+                    <div class="w-20 h-20 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-4 border-4 border-green-200"><svg class="w-10 h-10 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path></svg></div>
+                    <h4 class="text-2xl font-bold text-gray-800 mb-2">Caja Abierta Correctamente</h4>
+                    <p class="text-gray-500">El turno ha sido iniciado con éxito.</p>
+                    <div class="mt-6 p-4 bg-gray-50 inline-block rounded-lg border border-gray-200"><p class="text-sm text-gray-600 uppercase font-semibold mb-1">Fondo Inicial Asignado</p><p class="text-3xl font-bold text-yoayu-green" id="apertura-display-monto">Gs. 0</p></div>
+                    <div class="mt-8"><button onclick="switchView('dashboard')" class="btn-apex-primary px-8 py-3">Ir al Panel Principal</button></div>
+                </div>
+            </section>
+
+             <!-- CIERRE (Vista existente) -->
+             <section id="cierre-view" class="view-content space-y-4">
+                 <!-- Contenido Cierre Completo (Sin cambios) -->
+                <div class="card">
+                    <div class="p-4 grid grid-cols-2 md:grid-cols-4 gap-4 text-xs bg-gray-50 border-b">
+                        <div><span class="block text-gray-400 uppercase">Sucursal</span><span class="font-bold text-gray-700">Casa Matriz</span></div>
+                        <div><span class="block text-gray-400 uppercase">Cajero</span><span class="font-bold text-gray-700">Juan Perez (01)</span></div>
+                        <div><span class="block text-gray-400 uppercase">Apertura</span><span class="font-bold text-gray-700" id="cierre-fecha-apertura">--</span></div>
+                        <div><span class="block text-gray-400 uppercase">Fondo Inicial</span><span class="font-bold text-yoayu-green" id="cierre-monto-apertura">Gs. 0</span></div>
+                    </div>
+                    <div class="border-b px-4"><div class="flex space-x-6"><button class="py-3 text-sm font-medium border-b-2 border-yoayu-green text-yoayu-green focus:outline-none" onclick="switchCierreTab('ingresos', this)">1. Arqueo de Valores</button><button class="py-3 text-sm font-medium text-gray-500 border-b-2 border-transparent hover:text-gray-700 focus:outline-none" onclick="switchCierreTab('egresos', this)">2. Detalle de Egresos</button></div></div>
+                    <div class="p-6">
+                        <div id="tab-cierre-ingresos">
+                            <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
+                                <div><h4 class="text-sm font-bold text-gray-700 mb-3 border-l-4 border-green-500 pl-2">Billetaje (Guaraníes)</h4><table class="w-full text-sm border"><thead class="bg-gray-100 text-gray-600"><tr><th class="p-2 text-left">Denominación</th><th class="p-2 text-center">Cant.</th><th class="p-2 text-right">Total</th></tr></thead><tbody class="divide-y" id="billetaje-body"></tbody><tfoot class="bg-gray-50 font-bold"><tr><td colspan="2" class="p-2 text-right">Total Efectivo:</td><td class="p-2 text-right text-yoayu-green" id="total-billetaje">Gs. 0</td></tr></tfoot></table></div>
+                                <div class="space-y-6"><div><h4 class="text-sm font-bold text-gray-700 mb-3 border-l-4 border-blue-500 pl-2">Conciliación</h4><table class="w-full text-sm border"><thead class="bg-gray-100 text-gray-600"><tr><th class="p-2 text-left">Medio</th><th class="p-2 text-right">Teórico</th><th class="p-2 text-right">Real</th><th class="p-2 text-right">Dif.</th></tr></thead><tbody class="divide-y" id="conciliacion-body"><tr><td class="p-2">Efectivo</td><td class="p-2 text-right" id="teo-efectivo">0</td><td class="p-2 text-right font-bold text-blue-700" id="real-efectivo">0</td><td class="p-2 text-right font-bold" id="diff-efectivo">0</td></tr><tr><td class="p-2">Cheques</td><td class="p-2 text-right" id="teo-cheque">0</td><td class="p-2 text-right"><input type="number" id="input-real-cheque" oninput="updateConciliacion()" class="w-full text-right p-1 h-6 text-xs" placeholder="0"></td><td class="p-2 text-right font-bold" id="diff-cheque">0</td></tr><tr><td class="p-2">Tarjetas</td><td class="p-2 text-right" id="teo-tarjeta">0</td><td class="p-2 text-right"><input type="number" id="input-real-tarjeta" oninput="updateConciliacion()" class="w-full text-right p-1 h-6 text-xs" placeholder="0"></td><td class="p-2 text-right font-bold" id="diff-tarjeta">0</td></tr><tr><td class="p-2">Transf.</td><td class="p-2 text-right" id="teo-transf">0</td><td class="p-2 text-right"><input type="number" id="input-real-transf" oninput="updateConciliacion()" class="w-full text-right p-1 h-6 text-xs" placeholder="0"></td><td class="p-2 text-right font-bold" id="diff-transf">0</td></tr></tbody></table></div><div><label>Observaciones</label><textarea class="w-full p-2 h-20"></textarea></div></div>
+                            </div>
+                        </div>
+                        <div id="tab-cierre-egresos" class="hidden"><div class="flex justify-between items-center mb-4 pb-2 border-b"><h4 class="text-sm font-bold text-gray-700">Detalle Clasificado de Salidas</h4><div class="text-right"><span class="text-xs text-gray-500 uppercase">Total Egresos</span><p class="text-lg font-bold text-orange-600" id="total-egresos-header">Gs. 0</p></div></div><div class="space-y-4" id="egresos-categories-container"></div></div>
+                    </div>
+                </div>
+                <div class="card bg-gray-800 text-white border-none">
+                    <div class="p-6 grid grid-cols-1 md:grid-cols-4 gap-6 items-end">
+                        <div class="bg-gray-700/50 p-3 rounded"><span class="block text-xs text-gray-400 mb-1">Saldo Inicial + Ingresos</span><span class="text-lg font-bold text-green-400" id="footer-total-ingresos">Gs. 0</span></div>
+                        <div class="bg-gray-700/50 p-3 rounded"><span class="block text-xs text-gray-400 mb-1">(-) Total Egresos</span><span class="text-lg font-bold text-orange-400" id="footer-total-egresos">Gs. 0</span></div>
+                        <div class="bg-gray-700/50 p-3 rounded border border-gray-600"><span class="block text-xs text-gray-300 mb-1">(=) Saldo Teórico</span><span class="text-xl font-bold text-white" id="footer-saldo-teorico">Gs. 0</span></div>
+                        <div><div class="flex justify-between text-xs mb-1"><span class="text-gray-400">Arqueo Real:</span><span class="font-bold" id="footer-arqueo-real">Gs. 0</span></div><div class="flex justify-between text-sm bg-white/10 p-2 rounded mb-3"><span class="text-gray-300 font-bold">Diferencia:</span><span class="font-bold" id="footer-diferencia">Gs. 0</span></div><button onclick="confirmarCierre()" class="w-full bg-red-600 hover:bg-red-700 text-white font-bold py-2 rounded text-sm transition-colors h-10">CONFIRMAR CIERRE</button></div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- CAJA -->
+            <section id="caja-view" class="view-content space-y-4">
+                 <!-- Contenido de Caja (Sin cambios) -->
+                 <div class="flex justify-center mb-4"><div class="bg-white rounded p-1 shadow-sm border inline-flex"><button id="btn-mode-ingreso" onclick="setTransactionMode('ingreso')" class="px-6 py-2 text-sm font-medium rounded transition-colors bg-green-50 text-yoayu-green border border-yoayu-green">Registrar Cobro (Ingreso)</button><button id="btn-mode-egreso" onclick="setTransactionMode('egreso')" class="px-6 py-2 text-sm font-medium rounded transition-colors text-gray-500 hover:bg-gray-50">Registrar Pago (Egreso)</button></div></div>
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+                    <div class="md:col-span-1 card h-full"><div class="card-header">1. Búsqueda de Socio</div><div class="p-4 space-y-4"><div><label>N° Socio o C.I.</label><div class="flex"><input type="text" id="member-search-input" placeholder="Ej: 1001" class="w-full rounded-r-none border-r-0"><button onclick="searchMember()" class="bg-yoayu-green text-white px-4 rounded-r hover:bg-yoayu-dark h-10 flex items-center justify-center"><svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path></svg></button></div></div><div id="member-info" class="hidden p-3 bg-gray-50 border rounded text-sm space-y-1"><p class="font-bold text-gray-800 text-base" id="member-name">--</p><p class="text-gray-500" id="member-id">--</p></div></div></div>
+                    <!-- AJUSTE 2: AGREGAR SECCIÓN "SIN MORA REGISTRADA" -->
+                    <div class="md:col-span-2 card" id="member-balances-card">
+                        <div class="card-header">2. Posición Consolidada</div>
+                        <div class="p-4">
+                            <div class="grid grid-cols-2 lg:grid-cols-4 gap-4 text-center mb-4">
+                                <div class="p-3 border-l-4 border-green-500 bg-white shadow-sm rounded-r"><p class="text-[10px] text-gray-500 uppercase tracking-wide">Ahorro a la Vista</p><p class="text-lg font-bold text-gray-800" id="balance-ahorro">0 Gs</p></div>
+                                <div class="p-3 border-l-4 border-yoayu-green bg-white shadow-sm rounded-r"><p class="text-[10px] text-gray-500 uppercase tracking-wide">Aporte Total</p><p class="text-lg font-bold text-yoayu-green" id="balance-aporte">0 Gs</p></div>
+                                <div class="p-3 border-l-4 border-red-500 bg-white shadow-sm rounded-r"><p class="text-[10px] text-gray-500 uppercase tracking-wide">Crédito Vencido</p><p class="text-lg font-bold text-red-600" id="balance-capital-vencido">0 Gs</p></div>
+                                <div class="p-3 border-l-4 border-gray-400 bg-white shadow-sm rounded-r"><p class="text-[10px] text-gray-500 uppercase tracking-wide">Tarjeta Saldo</p><p class="text-lg font-bold text-gray-700" id="balance-tarjeta">0 Gs</p></div>
+                            </div>
+                            <!-- Barra de Mora -->
+                            <div class="bg-yellow-50 border border-yellow-100 text-yellow-700 text-xs py-2 px-4 rounded text-center font-medium" id="mora-detail-data">
+                                Sin mora registrada.
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div id="ingresos-container" class="card"><div class="card-header flex justify-between items-center"><span>3. Obligaciones Pendientes</span><span class="text-xs bg-green-100 text-green-800 px-2 py-1 rounded">Ingreso</span></div><div class="p-4"><div class="flex border-b mb-4 overflow-x-auto"><button class="px-4 py-2 text-sm font-medium text-yoayu-green border-b-2 border-yoayu-green" data-tab="aportes" onclick="setActiveTab(this)">Aportes/Fondos</button><button class="px-4 py-2 text-sm font-medium text-gray-500 hover:text-gray-700" data-tab="creditos" onclick="setActiveTab(this)">Créditos/Tarjetas</button><button class="px-4 py-2 text-sm font-medium text-gray-500 hover:text-gray-700" data-tab="ahorros" onclick="setActiveTab(this)">Ahorros</button><button class="px-4 py-2 text-sm font-medium text-gray-500 hover:text-gray-700" data-tab="servicios" onclick="setActiveTab(this)">Servicios</button></div><div class="overflow-x-auto mb-6"><table class="w-full text-sm divide-y"><thead class="bg-gray-50 text-xs text-gray-500 uppercase"><tr><th class="p-3 text-left w-10">Pagar</th><th class="p-3 text-left">Concepto</th><th class="p-3 text-left">Vencimiento</th><th class="p-3 text-right">Cuota</th><th class="p-3 text-right text-red-500">Mora</th><th class="p-3 text-right">Total</th></tr></thead><tbody id="obligation-table-body" class="divide-y"><tr class="text-center text-gray-400"><td colspan="6" class="p-4">Busque un socio para ver datos.</td></tr></tbody></table></div><div class="border-t pt-4 grid grid-cols-1 md:grid-cols-3 gap-8"><div class="md:col-span-2 space-y-4"><div class="flex justify-between items-center"><h4 class="text-sm font-bold text-gray-700">4. Formas de Pago</h4><button onclick="addPaymentMethod()" id="add-payment-btn" class="text-xs bg-gray-100 text-gray-700 px-2 py-1 rounded border hover:bg-gray-200" disabled>+ Agregar</button></div><div id="payment-methods-container" class="space-y-2"></div>
+                       
+                        <!-- BLOQUE MEJORADO DE RECIBIDO Y VUELTO -->
+                        <div class="p-4 rounded-lg shadow-inner bg-green-50 border-2 border-green-100 grid grid-cols-2 gap-4">
+                            <div>
+                                <span class="text-gray-600 font-semibold text-lg">Total Recibido:</span>
+                                <span id="total-received-amount" class="font-extrabold text-xl text-yoayu-green ml-2">0 Gs</span>
+                            </div>
+                            <div>
+                                <span class="text-gray-600 font-semibold text-lg">Vuelto:</span>
+                                <span id="change-amount" class="font-extrabold text-xl text-yoayu-green ml-2">0 Gs</span>
+                            </div>
+                        </div>
+
+                    </div><div class="bg-yoayu-green/5 p-4 rounded border border-yoayu-green/20 flex flex-col justify-between"><div><p class="text-xs text-gray-500 uppercase font-semibold">Total a Pagar</p><p class="text-3xl font-bold text-yoayu-green" id="total-payment">0 Gs</p></div><button onclick="processPayment()" id="process-payment-btn" class="w-full btn-apex-primary mt-4 disabled:opacity-50 h-10" disabled>CONFIRMAR COBRO</button></div></div></div></div>
+                <div id="egresos-container" class="card hidden-section border-t-4 border-t-orange-500"><div class="card-header text-orange-700">Registrar Egresos de la Caja</div><div class="p-6 grid grid-cols-1 md:grid-cols-2 gap-8"><div class="space-y-4"><div><label>Clasificación del Egreso</label><select id="egreso-grupo" onchange="updateEgresoSubtipos()" class="w-full bg-gray-50"><option value="">-- Seleccione Grupo --</option><option value="1">1. Operativos con Socios</option><option value="2">2. Proveedores y Servicios</option><option value="3">3. Financieros y Bancarios</option><option value="4">4. Obligaciones Cooperativa</option><option value="5">5. Administrativos Socio</option><option value="6">6. Ajustes y Otros</option></select></div><div><label>Concepto Específico</label><select id="egreso-subtipo" disabled class="w-full disabled:bg-gray-100 bg-white"><option value="">-- Seleccione Grupo Primero --</option></select></div><div class="grid grid-cols-2 gap-4"><div><label>Monto (Gs)</label><input type="number" id="egreso-monto-input" class="w-full font-bold text-right" placeholder="0"></div><div><label>N° Comprobante</label><input type="text" id="egreso-doc" class="w-full" placeholder="Factura/Recibo"></div></div><div><label>Beneficiario / Detalle</label><input type="text" id="egreso-beneficiario" class="w-full" placeholder="Nombre..."></div></div><div class="space-y-4 border-l pl-6"><div><label>Forma de Desembolso</label><select id="egreso-metodo" onchange="toggleEgresoBankFields()" class="w-full"><option value="Efectivo">Efectivo (Caja)</option><option value="Cheque">Cheque Propio</option><option value="Transferencia">Transferencia Bancaria</option></select></div><div id="egreso-bank-fields" class="hidden space-y-3 bg-gray-50 p-3 rounded border"><div><label>Banco de Salida</label><select id="egreso-banco" class="w-full text-xs"></select></div><div><label>N° Cheque / Referencia</label><input type="text" id="egreso-ref-banco" class="w-full text-xs" placeholder="000000"></div></div><div class="bg-orange-50 p-4 rounded border border-orange-100 mt-4 text-center"><p class="text-xs text-orange-800 uppercase font-semibold">Total Salida</p><p class="text-2xl font-bold text-orange-600" id="total-egreso-display">Gs. 0</p></div><button onclick="processEgreso()" class="w-full h-12 bg-orange-600 hover:bg-orange-700 text-white font-bold rounded shadow-sm">CONFIRMAR EGRESO</button></div></div></div>
+            </section>
+
+            <!-- CONSULTAS (Actualizada con filtros APEX) -->
+            <section id="obligaciones-view" class="view-content">
+                <!-- Contenido Consulta Obligaciones (Sin cambios) -->
+                <div class="card mb-6"><div class="card-header bg-white border-b-0 pb-0">Criterios de Búsqueda</div><div class="p-4"><div class="grid grid-cols-1 md:grid-cols-12 gap-4 items-end"><div class="md:col-span-3"><label>N° Socio / Documento</label><input type="text" id="filter-oblig-socio" class="w-full" placeholder="Ingrese dato..."></div><div class="md:col-span-3"><label>Tipo Obligación</label><select id="filter-oblig-tipo" class="w-full"><option value="">Todas</option><option value="Crédito Personal">Crédito Personal</option><option value="Tarjeta de Crédito">Tarjeta de Crédito</option><option value="Aporte Ordinario">Aporte Ordinario</option></select></div><div class="md:col-span-3"><label>Estado</label><select id="filter-oblig-estado" class="w-full"><option value="">Todos</option><option value="Pendiente">Pendiente</option><option value="Vencido">Vencido</option><option value="Pagado">Pagado</option></select></div><div class="md:col-span-3 flex gap-2"><button onclick="filterObligations()" class="btn-apex-primary flex-1"><svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path></svg>Buscar</button><button class="btn-apex-primary bg-white text-gray-700 border border-gray-300 hover:bg-gray-50"><svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"></path></svg></button></div></div></div></div>
+                <div class="card overflow-hidden"><table class="w-full text-sm divide-y"><thead class="bg-gray-100 text-gray-600"><tr><th class="p-3 text-left">Socio</th><th class="p-3 text-left">Concepto</th><th class="p-3 text-left">Vencimiento</th><th class="p-3 text-right">Monto</th><th class="p-3 text-center">Estado</th></tr></thead><tbody id="query-results-body" class="bg-white divide-y"></tbody></table></div>
+            </section>
+
+             <!-- REPORTES (Actualizada con filtros APEX) -->
+             <section id="reportes-view" class="view-content">
+                 <!-- Contenido Reportes (Sin cambios) -->
+                <div class="grid grid-cols-1 md:grid-cols-4 gap-6 mb-6"><div class="card p-4 border-l-4 border-blue-500"><p class="text-xs text-gray-500 uppercase">Apertura</p><h3 class="text-xl font-bold text-blue-700" id="kpi-apertura">Gs. 0</h3></div><div class="card p-4 border-l-4 border-green-500"><p class="text-xs text-gray-500 uppercase">Ingresos</p><h3 class="text-xl font-bold text-green-700" id="kpi-ingresos">Gs. 0</h3></div><div class="card p-4 border-l-4 border-orange-500"><p class="text-xs text-gray-500 uppercase">Egresos</p><h3 class="text-xl font-bold text-orange-700" id="kpi-egresos">Gs. 0</h3></div><div class="card p-4 border-l-4 border-gray-700 bg-gray-50"><p class="text-xs text-gray-500 uppercase">Saldo Neto</p><h3 class="text-xl font-bold text-gray-800" id="kpi-neto">Gs. 0</h3></div></div>
+                <div class="card mb-6"><div class="p-4"><div class="grid grid-cols-1 md:grid-cols-12 gap-4 items-end"><div class="md:col-span-4"><label>Tipo de Transacción</label><select id="report-filter-type" onchange="loadReports()" class="w-full"><option value="all">Todas las transacciones</option><option value="Ingreso">Solo Ingresos</option><option value="Egreso">Solo Egresos</option></select></div><div class="md:col-span-3"><label>Desde</label><input type="date" id="report-filter-from" onchange="loadReports()" class="w-full"></div><div class="md:col-span-3"><label>Hasta</label><input type="date" id="report-filter-to" onchange="loadReports()" class="w-full"></div><div class="md:col-span-2 text-right"><button class="btn-apex-primary w-full bg-yoayu-green hover:bg-yoayu-dark"><svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path></svg>Exportar</button></div></div></div></div>
+                <div class="card"><div class="card-header border-b">Historial de Transacciones</div><div class="overflow-x-auto"><table class="w-full text-sm divide-y"><thead class="bg-gray-50 text-xs text-gray-500 uppercase"><tr><th class="p-3 text-left">Fecha</th><th class="p-3 text-left">Tipo</th><th class="p-3 text-left">Socio/Benef.</th><th class="p-3 text-left">Concepto</th><th class="p-3 text-center">Medio</th><th class="p-3 text-right">Monto</th></tr></thead><tbody id="transaction-history-body" class="divide-y bg-white"></tbody></table></div></div>
+            </section>
+
+        </main>
+    </div>
+</div>
+
+<!-- MODAL DE INYECCIÓN DE FONDOS (TESORERÍA) -->
+<div id="modal-inyeccion" class="fixed inset-0 hidden overflow-y-auto h-full w-full modal-backdrop flex items-center justify-center">
+    <div class="relative p-5 border w-96 shadow-lg rounded-md bg-white">
+        <div class="mt-3 text-center">
+            <div class="mx-auto flex items-center justify-center h-12 w-12 rounded-full bg-blue-100 mb-4">
+                <svg class="h-6 w-6 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path></svg>
+            </div>
+            <h3 class="text-lg leading-6 font-bold text-gray-900" id="modal-title">Inyección de Efectivo</h3>
+            <p class="text-sm text-gray-500 mt-1" id="modal-subtitle">Caja Destino: --</p>
+           
+            <div class="mt-4 px-2 py-3 bg-gray-50 text-left rounded border space-y-3">
+                 <div>
+                    <label class="text-xs font-bold text-gray-600">Origen de Fondos</label>
+                    <select id="inj-origen" class="w-full h-8 text-sm border-gray-300 rounded">
+                        <option value="Boveda">Bóveda Central</option>
+                        <option value="Banco">Banco (Cheque)</option>
+                    </select>
+                 </div>
+                 <div>
+                    <label class="text-xs font-bold text-gray-600">Monto a Insertar</label>
+                    <input type="text" id="inj-monto" class="w-full h-8 text-sm border-gray-300 rounded font-bold text-right" placeholder="0">
+                 </div>
+                 <div>
+                    <label class="text-xs font-bold text-gray-600">Motivo / Justificación</label>
+                    <input type="text" id="inj-motivo" class="w-full h-8 text-sm border-gray-300 rounded" placeholder="Reposición de sencillo...">
+                 </div>
+            </div>
+           
+            <div class="items-center px-4 py-3">
+                <button id="btn-confirm-inj" class="px-4 py-2 bg-blue-600 text-white text-base font-medium rounded-md w-full shadow-sm hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-300 mb-2">
+                    Confirmar Transacción
+                </button>
+                <button onclick="closeInjectionModal()" class="px-4 py-2 bg-white text-gray-700 text-base font-medium rounded-md w-full shadow-sm border border-gray-300 hover:bg-gray-50 focus:outline-none">
+                    Cancelar
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- *** NUEVO MODAL DE RESUMEN DE COBRO *** -->
+<div id="modal-cobro-resumen" class="fixed inset-0 hidden overflow-y-auto h-full w-full modal-backdrop flex items-center justify-center z-50">
+    <div class="relative p-6 border w-full max-w-lg shadow-2xl rounded-lg bg-white transform transition-all">
+        <div class="text-center">
+            <div class="mx-auto flex items-center justify-center h-12 w-12 rounded-full bg-green-100 mb-4">
+                <svg class="h-6 w-6 text-yoayu-green" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path></svg>
+            </div>
+            <h3 class="text-2xl leading-6 font-extrabold text-gray-900">¡Cobro Exitoso!</h3>
+            <p class="text-sm text-gray-500 mt-1">Transacción registrada. Recibo N° <span id="receipt-number" class="font-bold text-gray-700">--</span></p>
+           
+            <div class="mt-4 text-left p-4 bg-gray-50 rounded-lg border border-gray-200">
+                <p class="text-sm text-gray-700 font-semibold mb-2">Socio: <span id="receipt-member-name" class="font-bold text-yoayu-green">--</span></p>
+               
+                <div class="border-t border-b py-3 mb-3 grid grid-cols-2 gap-2 text-xs">
+                    <div class="text-gray-500">Total Obligaciones:</div>
+                    <div class="text-right font-bold text-gray-800" id="receipt-total-payment">--</div>
+                    <div class="text-gray-500">Monto Recibido:</div>
+                    <div class="text-right font-bold text-yoayu-green" id="receipt-total-received">--</div>
+                    <div class="text-gray-500 font-bold text-base">VUELTO:</div>
+                    <div class="text-right font-extrabold text-xl text-red-500" id="receipt-change-amount">--</div>
+                </div>
+               
+                <h4 class="text-xs font-bold text-gray-600 uppercase mb-2">Obligaciones Pagadas:</h4>
+                <ul id="receipt-obligations-list" class="space-y-1 text-xs text-gray-800 border-l-2 pl-2 border-gray-300 max-h-32 overflow-y-auto">
+                    <!-- Populated by JS -->
+                </ul>
+            </div>
+           
+            <div class="items-center px-4 py-3 space-y-2">
+                <button onclick="printReceipt()" class="px-4 py-3 bg-blue-600 text-white text-base font-medium rounded-md w-full shadow-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-300 flex items-center justify-center">
+                    <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 17h2v2h-2zm0-4h2v2h-2zm0-4h2v2h-2zm-6 10h2v2h-2zm0-4h2v2h-2zm0-4h2v2h-2zm-4 4h2v2H7zm0-4h2v2H7z"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 9H7a2 2 0 00-2 2v6a2 2 0 002 2h10a2 2 0 002-2v-6a2 2 0 00-2-2zM7 9V5a2 2 0 012-2h6a2 2 0 012 2v4"></path></svg>
+                    Imprimir Recibo / Factura
+                </button>
+                <button onclick="closeReceiptModal()" class="px-4 py-3 bg-white text-yoayu-green text-base font-medium rounded-md w-full shadow-sm border border-yoayu-green hover:bg-yoayu-light focus:outline-none">
+                    Cerrar y Continuar
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+<!-- FIN MODAL DE RESUMEN DE COBRO -->
+
+
+<script>
+    // --- CONSTANTES DE NEGOCIO ---
+    const BANCOS_PY = [
+        "BANCO ITAÚ PARAGUAY S.A.", "BANCO ATLAS S.A.", "BANCO BASA S.A.",
+        "BANCO CONTINENTAL S.A.E.C.A.", "BANCO FAMILIAR S.A.E.C.A.", "BANCO GNB PARAGUAY S.A.",
+        "BANCO NACIONAL DE FOMENTO", "BANCO RÍO S.A.E.C.A.", "SUDAMERIS BANK S.A.E.C.A.",
+        "VISIÓN BANCO S.A.E.C.A.", "COOPERATIVA YOAYU LTDA.", "UENO BANK"
+    ];
+
+    const VIEW_TITLES = { 'dashboard': 'Panel Principal', 'apertura': 'Apertura de Caja', 'caja': 'Movimientos (Caja)', 'cierre': 'Arqueo y Cierre', 'obligaciones': 'Consulta Obligaciones', 'reportes': 'Reportes y Resumen', 'mant-cajas': 'Mantenimiento de Cajas', 'assign-cajas': 'Asignación de Cajas', 'tesoreria': 'Monitor de Tesorería' };
+    const DENOMINATIONS = [100000, 50000, 20000, 10000, 5000, 2000, 1000, 500, 100, 50];
+    const EGRESO_TYPES = {
+        "1": { label: "1. Operativos con Socios", subs: ["Retiro Ahorro a la Vista", "Cancelación Plazo Fijo", "Retiro de Aportes", "Pago de Excedentes", "Reintegro Cobranza", "Vuelto/Diferencia Caja"] },
+        "2": { label: "2. Proveedores y Servicios", subs: ["Pago ANDE/ESSAP", "Internet/Telefonía", "Limpieza", "Materiales Oficina", "Mantenimiento", "Viáticos/Movilidad", "Pago Proveedor Gral"] },
+        "3": { label: "3. Financieros y Bancarios", subs: ["Remesa a Bóveda", "Remesa a Agencia", "Depósito Bancario", "Pago Comisiones Bancarias"] },
+        "4": { label: "4. Obligaciones Cooperativa", subs: ["Adelanto de Salario", "Pago de Salarios", "Fondo Caja Chica", "Pago Impuestos/Tasas"] },
+        "5": { label: "5. Administrativos Socio", subs: ["Devolución Aportes (Baja)", "Pago Solidaridad (Subsidio)", "Reintegro Admisión"] },
+        "6": { label: "6. Ajustes y No Operativos", subs: ["Faltante de Caja (Ajuste)", "Redondeo", "Reversión Ingreso"] }
+    };
+
+    // --- MOCK DATA CAJAS ---
+    let MOCK_CAJAS = [
+        { id: 1, codigo: '001', descripcion: 'CAJA CENTRAL 1', tipo: 'Caja Normal', moneda: 'PYG - Guarani', minApertura: 500000, sucursal: 'Casa Matriz', agencia: 'Agencia Casa Matriz', estado: 'Activo' },
+        { id: 2, codigo: '002', descripcion: 'CAJA CENTRAL 2', tipo: 'Caja Chica', moneda: 'PYG - Guarani', minApertura: 10000000, sucursal: 'Casa Matriz', agencia: 'Agencia Casa Matriz', estado: 'Activo' }
+    ];
+
+    // --- MOCK DATA ASIGNACIONES ---
+    let MOCK_ASSIGNMENTS = [
+        { id: 1, sucursal: 'Casa Matriz', agencia: 'Agencia Casa Matriz', codigo: '001', caja: '001-Caja Central 1', tipo: 'Caja Normal', cajero: 'Mario Cano', importe: 500000, estado: 'Activo' },
+        { id: 2, sucursal: 'Casa Matriz', agencia: 'Agencia Casa Matriz', codigo: '002', caja: '002-Caja Central 2', tipo: 'Caja Chica', cajero: 'Raul Perez', importe: 10000000, estado: 'Inactivo' }
+    ];
+
+    // --- MOCK DATA TESORERIA ---
+    let LIVE_CAJAS_STATUS = [
+        { id: '001', desc: 'CAJA CENTRAL 1', cajero: 'Juan Perez', estado: 'Cerrada', saldo: 0, sucursal: 'Casa Matriz' },
+        { id: '002', desc: 'CAJA CENTRAL 2', cajero: 'Maria Lopez', estado: 'Abierta', saldo: 12500000, sucursal: 'Casa Matriz' },
+        { id: '003', desc: 'CAJA RÁPIDA 1', cajero: 'Carlos Ruiz', estado: 'Abierta', saldo: 4500000, sucursal: 'Casa Matriz' },
+        { id: '004', desc: 'CAJA AGENCIA 1', cajero: 'Ana Torres', estado: 'Cerrada', saldo: 0, sucursal: 'Agencia 1' }
+    ];
+    let currentInjectionId = null;
+
+    // --- MOCK DATA GENERADA (MASIVA) ---
+    const generateMembers = () => {
+        const members = {};
+        const names = ["Juan Pérez", "Maria Lopez", "Carlos Ruiz", "Ana Torres", "Luis Gomez", "Rosa Martinez", "Pedro Sanchez", "Laura Benitez", "Jose Silva", "Carmen Diaz"];
+        for(let i=0; i<names.length; i++) {
+            const id = (1001 + i).toString();
+            members[id] = {
+                id: id, name: names[i],
+                saldoAhorro: Math.floor(Math.random() * 10000000),
+                saldoAporte: Math.floor(Math.random() * 5000000 + 1000000),
+                capitalVencido: Math.random() > 0.7 ? Math.floor(Math.random() * 1000000) : 0,
+                saldoTarjeta: Math.random() > 0.5 ? Math.floor(Math.random() * 3000000) : 0,
+                moraAporte: 0, moraCredito: 0
+            };
+        }
+       
+        // --- DATOS ESPECIALES PARA SOCIO 1001 (Juan Pérez) ---
+        members['1001'] = {
+             id: '1001', name: 'Juan Pérez García',
+             saldoAhorro: 12000000,
+             saldoAporte: 6500000,
+             capitalVencido: 75000 + 22000, // Suma de moras de crédito y tarjeta
+             saldoTarjeta: 1800000,
+             moraAporte: 5000, // Aporte vencido
+             moraCredito: 97000 // Total de mora
+        };
+        return members;
+    };
+    const MOCK_MEMBER_BALANCES = generateMembers();
+
+    const getObligationDetails = (id, memberId) => {
+        const memberObs = MOCK_MEMBER_OBLIGATIONS[memberId] || [];
+        return memberObs.find(ob => ob.id === id);
+    };
+
+    const generateObligations = () => {
+        const obs = {};
+        Object.keys(MOCK_MEMBER_BALANCES).forEach(id => {
+            obs[id] = [];
+            if(id !== '1001') { // Generate simple data for others
+                 if(Math.random() > 0.3) obs[id].push({ id: id+'1', type: 'aportes', concept: 'Aporte Ordinario', date: '2025-11-15', amount: 50000, mora: 0, total: 50000 });
+                 if(Math.random() > 0.5) obs[id].push({ id: id+'2', type: 'aportes', concept: 'Solidaridad', date: '2025-11-15', amount: 15000, mora: 0, total: 15000 });
+                 if(Math.random() > 0.7) obs[id].push({ id: id+'3', type: 'creditos', concept: 'Cuota Préstamo #404', date: '2025-11-10', amount: 450000, mora: 15000, total: 465000 });
+                 if(Math.random() > 0.8) obs[id].push({ id: id+'4', type: 'servicios', concept: 'Seguro Médico', date: '2025-11-30', amount: 120000, mora: 0, total: 120000 });
+            }
+        });
+       
+        // --- DATA DE CARGA PARA SOCIO 1001 (Juan Pérez) ---
+        obs['1001'] = [
+            {
+                id: '1001_1', type: 'creditos', concept: 'Préstamo Personal - Cuota 18/24', date: '2024-10-15',
+                amount: 550000,
+                mora: 75000,
+                moraDetails: { moratorio: 35000, punitorio: 15000, gestion: 25000 },
+                total: 625000
+            },
+            {
+                id: '1001_2', type: 'creditos', concept: 'Tarjeta de Crédito - Pago Mínimo', date: '2024-11-05',
+                amount: 150000,
+                mora: 22000,
+                moraDetails: { moratorio: 12000, punitorio: 10000, gestion: 0 },
+                total: 172000
+            },
+            {
+                id: '1001_3', type: 'aportes', concept: 'Aporte Ordinario Nov.', date: '2024-11-10',
+                amount: 50000, mora: 5000,
+                moraDetails: { moratorio: 3000, punitorio: 1000, gestion: 1000 },
+                total: 55000
+            },
+            {
+                id: '1001_4', type: 'aportes', concept: 'Fondo de Solidaridad', date: '2024-11-10',
+                amount: 15000, mora: 1500,
+                moraDetails: { moratorio: 1000, punitorio: 500, gestion: 0 },
+                total: 16500
+            },
+            {
+                id: '1001_5', type: 'servicios', concept: 'Servicio Fúnebre (Vencido)', date: '2024-10-30',
+                amount: 35000, mora: 10000,
+                moraDetails: { moratorio: 5000, punitorio: 5000, gestion: 0 },
+                total: 45000
+            },
+            {
+                id: '1001_6', type: 'ahorros', concept: 'Ahorro Programado - Cuota Nov.', date: '2024-11-30',
+                amount: 100000,
+                mora: 0,
+                moraDetails: null,
+                total: 100000
+            }
+        ];
+
+        return obs;
+    };
+    const MOCK_MEMBER_OBLIGATIONS = generateObligations();
+
+    // Historial con ~20 registros
+    const MOCK_TRANSACTIONS = [
+        { date: '2025-11-27 08:05', type: 'Ingreso', receipt: 'REC-00100', member: 'Juan Pérez', concept: 'Aporte Mensual', method: 'Efectivo', amount: 65000 },
+        { date: '2025-11-27 08:20', type: 'Ingreso', receipt: 'REC-00101', member: 'Maria Lopez', concept: 'Cuota Crédito', method: 'Efectivo', amount: 500000 },
+        { date: '2025-11-27 09:00', type: 'Egreso', receipt: 'EGR-0050', member: 'Limpieza Express SA', concept: 'Pago Limpieza', categoryId: '2', method: 'Cheque', amount: 1500000 },
+        { date: '2025-11-27 09:15', type: 'Ingreso', receipt: 'REC-00102', member: 'Carlos Ruiz', concept: 'Ahorro Programado', method: 'Transferencia', amount: 200000 },
+        { date: '2025-11-27 10:00', type: 'Egreso', receipt: 'EGR-0051', member: 'Juan Pérez', concept: 'Retiro Ahorro', categoryId: '1', method: 'Efectivo', amount: 300000 },
+        { date: '2025-11-27 10:30', type: 'Ingreso', receipt: 'REC-00103', member: 'Ana Torres', concept: 'Pago Tarjeta', method: 'Efectivo', amount: 850000 },
+        { date: '2025-11-27 11:00', type: 'Egreso', receipt: 'EGR-0052', member: 'ANDE', concept: 'Pago Luz Matriz', categoryId: '2', method: 'Efectivo', amount: 450000 },
+        { date: '2025-11-27 11:45', type: 'Ingreso', receipt: 'REC-00104', member: 'Luis Gomez', concept: 'Aporte + Solidaridad', method: 'Efectivo', amount: 65000 },
+        { date: '2025-11-27 12:30', type: 'Egreso', receipt: 'EGR-0053', member: 'Funcionario Caja 2', concept: 'Adelanto Salario', categoryId: '4', method: 'Efectivo', amount: 200000 },
+        { date: '2025-11-27 13:15', type: 'Ingreso', receipt: 'REC-00105', member: 'Rosa Martinez', concept: 'Cancelación Préstamo', method: 'Cheque', amount: 5400000 },
+        { date: '2025-11-27 14:00', type: 'Egreso', receipt: 'EGR-0054', member: 'Tesorería', concept: 'Remesa a Bóveda', categoryId: '3', method: 'Efectivo', amount: 2000000 },
+        { date: '2025-11-27 14:30', type: 'Ingreso', receipt: 'REC-00106', member: 'Pedro Sanchez', concept: 'Aporte', method: 'Efectivo', amount: 50000 },
+        { date: '2025-11-27 15:00', type: 'Ingreso', receipt: 'REC-00107', member: 'Laura Benitez', concept: 'Cuota Crédito', method: 'Transferencia', amount: 330000 },
+        { date: '2025-11-27 15:15', type: 'Egreso', receipt: 'EGR-0055', member: 'Imprenta Color', concept: 'Útiles Oficina', categoryId: '2', method: 'Efectivo', amount: 150000 },
+        { date: '2025-11-27 15:45', type: 'Ingreso', receipt: 'REC-00108', member: 'Jose Silva', concept: 'Pago Tarjeta', method: 'Efectivo', amount: 120000 },
+        { date: '2025-11-26 08:00', type: 'Ingreso', receipt: 'REC-00099', member: 'Juan Pérez', concept: 'Aporte Anterior', method: 'Efectivo', amount: 50000 } // Ayer
+    ];
+
+    // Datos para Consulta de Obligaciones (Global)
+    const MOCK_QUERY_OBLIGATIONS = [
+        { member: 'Juan Pérez', concept: 'Crédito Personal 12/24', date: '2025-11-05', amount: 450000, status: 'Vencido' },
+        { member: 'Juan Pérez', concept: 'Tarjeta Crédito Min.', date: '2025-11-25', amount: 150000, status: 'Vencido' },
+        { member: 'Maria Lopez', concept: 'Aporte Ordinario', date: '2025-12-10', amount: 50000, status: 'Pendiente' },
+        { member: 'Carlos Ruiz', concept: 'Solidaridad', date: '2025-12-10', amount: 15000, status: 'Pendiente' },
+        { member: 'Ana Torres', concept: 'Crédito Vivienda', date: '2025-11-30', amount: 1200000, status: 'Pendiente' },
+        { member: 'Luis Gomez', concept: 'Ahorro Programado', date: '2025-11-30', amount: 100000, status: 'Pagado' }
+    ];
+
+    // --- ESTADO GLOBAL ---
+    let appState = { cajaAbierta: false, montoApertura: 0, fechaApertura: null, totalIngresos: 0, totalEgresos: 0 };
+    let currentTotal = 0; // Total a pagar por obligaciones seleccionadas
+    let totalPaid = 0; // Total recibido por el cajero
+    let paymentLineId = 0;
+    let selectedObligations = []; // IDs de obligaciones seleccionadas
+    let billCounts = {};
+
+    document.addEventListener('DOMContentLoaded', () => {
+        document.getElementById('header-date').textContent = new Date().toLocaleDateString('es-PY', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' });
+       
+        // Auto-fill datetime local for Apertura
+        const now = new Date();
+        now.setMinutes(now.getMinutes() - now.getTimezoneOffset());
+        document.getElementById('apertura-fecha-input').value = now.toISOString().slice(0,16);
+       
+        // Listeners
+        document.addEventListener('input', (e) => {
+            if(e.target.id === 'egreso-monto-input') {
+                document.getElementById('total-egreso-display').textContent = formatCurrency(parseInt(e.target.value)||0);
+            }
+        });
+
+        // Poblar Select de Bancos en Egresos (inicialmente oculto)
+        const bancoSelect = document.getElementById('egreso-banco');
+        BANCOS_PY.forEach(b => {
+            const opt = document.createElement('option');
+            opt.value = b; opt.textContent = b;
+            bancoSelect.appendChild(opt);
+        });
+       
+        // Poblar Selects en Formulario de Asignacion
+        populateAssignFormSelects();
+
+        switchView('dashboard');
+        loadReports();
+    });
+
+    // --- NAVIGATION ROBUSTA ---
+    function switchView(viewId) {
+        // Hide all main views first
+        document.querySelectorAll('.view-content').forEach(v => {
+            if (v && v.classList) {
+                v.classList.remove('active');
+                // Ensure form view is hidden if not active
+                if(v.id === 'mant-cajas-form-view' || v.id === 'assign-cajas-form-view') {
+                     v.classList.add('hidden-section');
+                }
+            }
+        });
+       
+        // Specific logic for Cajas Maintenance
+        if (viewId === 'mant-cajas') {
+             const listView = document.getElementById('mant-cajas-view');
+             const formView = document.getElementById('mant-cajas-form-view');
+             if (listView) { listView.classList.remove('hidden-section'); listView.classList.add('active'); }
+             if (formView) { formView.classList.add('hidden-section'); formView.classList.remove('active'); }
+             renderCajasTable();
+        }
+        // Specific logic for Assignment
+        else if (viewId === 'assign-cajas') {
+            const listView = document.getElementById('assign-cajas-view');
+            const formView = document.getElementById('assign-cajas-form-view');
+             if (listView) { listView.classList.remove('hidden-section'); listView.classList.add('active'); }
+             if (formView) { formView.classList.add('hidden-section'); formView.classList.remove('active'); }
+             renderAssignmentsTable();
+        }
+        else {
+             const targetView = document.getElementById(viewId + '-view');
+             if (targetView) targetView.classList.add('active');
+        }
+
+        const titleEl = document.getElementById('page-title');
+        if (titleEl && VIEW_TITLES[viewId]) titleEl.textContent = VIEW_TITLES[viewId];
+
+        document.querySelectorAll('.nav-item').forEach(i => i.classList.remove('active-link'));
+        const navItem = document.querySelector(`.nav-item[data-view="${viewId}"]`);
+        if (navItem) navItem.classList.add('active-link');
+
+        if(viewId === 'reportes') loadReports();
+        if(viewId === 'obligaciones') filterObligations();
+        if(viewId === 'cierre') { updateCierreData(); initCierreView(); }
+        if(viewId === 'tesoreria') renderTesoreriaTable();
+        if(viewId === 'dashboard') updateDashboard();
+    }
+
+    // --- LOGICA TESORERÍA (AGREGADA) ---
+    function renderTesoreriaTable() {
+        const tbody = document.getElementById('tesoreria-table-body');
+        if(!tbody) return;
+        tbody.innerHTML = '';
+       
+        let totalFondos = 0;
+        let abiertas = 0;
+
+        LIVE_CAJAS_STATUS.forEach(c => {
+            totalFondos += c.saldo;
+            if(c.estado === 'Abierta') abiertas++;
+
+            const statusClass = c.estado === 'Abierta' ? 'bg-green-100 text-green-800 border-green-200' : 'bg-red-100 text-red-800 border-red-200';
+            const dotClass = c.estado === 'Abierta' ? 'bg-green-500' : 'bg-red-500';
+            const btnActionText = c.estado === 'Abierta' ? 'Forzar Cierre' : 'Abrir Caja';
+            const btnActionClass = c.estado === 'Abierta' ? 'text-red-600 hover:text-red-800' : 'text-green-600 hover:text-green-800';
+            const btnActionIcon = c.estado === 'Abierta' ?
+                '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"></path>' :
+                '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 11V7a4 4 0 118 0m-4 8v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2z"></path>';
+
+            tbody.insertAdjacentHTML('beforeend', `
+                <tr class="hover:bg-gray-50 border-b border-gray-100 transition-colors">
+                    <td class="p-4">
+                        <div class="flex flex-col">
+                            <span class="text-sm font-bold text-gray-700">${c.desc}</span>
+                            <span class="text-xs text-gray-500">${c.id}</span>
+                        </div>
+                    </td>
+                    <td class="p-4 text-sm text-gray-600">
+                        <div class="flex items-center">
+                            <div class="h-6 w-6 rounded-full bg-gray-200 flex items-center justify-center text-xs font-bold text-gray-600 mr-2">${c.cajero.substring(0,2).toUpperCase()}</div>
+                            ${c.cajero}
+                        </div>
+                        <span class="text-[10px] text-gray-400 pl-8 block">${c.sucursal}</span>
+                    </td>
+                    <td class="p-4 text-center">
+                        <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium border ${statusClass}">
+                            <span class="w-1.5 h-1.5 mr-1.5 rounded-full ${dotClass}"></span>
+                            ${c.estado}
+                        </span>
+                    </td>
+                    <td class="p-4 text-right">
+                        <span class="text-sm font-bold text-gray-700 font-mono tracking-tight">${c.saldo.toLocaleString('es-PY')} Gs</span>
+                    </td>
+                    <td class="p-4 text-center">
+                        <div class="flex justify-end space-x-2">
+                             ${c.estado === 'Abierta' ? `
+                            <button onclick="openInjectionModal('${c.id}')" class="p-1.5 bg-blue-50 text-blue-600 rounded hover:bg-blue-100 transition-colors" title="Inyectar Efectivo">
+                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path></svg>
+                            </button>` : ''}
+                            <button onclick="toggleBoxStatus('${c.id}')" class="p-1.5 bg-gray-50 rounded hover:bg-gray-100 transition-colors ${btnActionClass}" title="${btnActionText}">
+                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">${btnActionIcon}</svg>
+                            </button>
+                            <button onclick="alert('Generando reporte de arqueo para caja ${c.id}...')
+                            " class="p-1.5 bg-gray-50 text-gray-500 rounded hover:bg-gray-100 transition-colors" title="Ver Arqueo / Auditar">
+                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-3 7h3m-3 4h3m-6-4h.01M9 16h.01"></path></svg>
+                            </button>
+                        </div>
+                    </td>
+                </tr>
+            `);
+        });
+
+        // KPIs Update
+        document.getElementById('tes-total-cajas').textContent = totalFondos.toLocaleString('es-PY') + " Gs";
+        document.getElementById('tes-count-open').textContent = abiertas;
+    }
+
+    function toggleBoxStatus(id) {
+        const box = LIVE_CAJAS_STATUS.find(c => c.id === id);
+        if(!box) return;
+
+        const action = box.estado === 'Abierta' ? 'CERRAR' : 'ABRIR';
+        const confirmMsg = box.estado === 'Abierta'
+            ? `¿Está seguro que desea realizar un CIERRE FORZADO de la ${box.desc}? Esta acción requiere justificación.`
+            : `¿Desea ABRIR remotamente la ${box.desc} para ${box.cajero}?`;
+
+        // Uso de modal simulado
+        const result = window.prompt(confirmMsg + "\n\nIngrese la justificación:");
+       
+        if (result !== null) { // User clicked OK (even if empty string)
+            // Toggle logic
+            box.estado = box.estado === 'Abierta' ? 'Cerrada' : 'Abierta';
+            if(box.estado === 'Abierta' && box.saldo === 0) box.saldo = 500000; // Simula apertura con saldo mínimo
+           
+            // Si es la caja del usuario actual (001), actualizar estado global
+            if(id === '001') {
+                appState.cajaAbierta = (box.estado === 'Abierta');
+                appState.montoApertura = box.saldo; // sync
+            }
+
+            renderTesoreriaTable();
+            alert(`Acción realizada: Caja ${box.estado.toUpperCase()}\nJustificación: ${result}`);
+        }
+    }
+
+    // --- LOGICA INYECCION (TESORERÍA) ---
+    function openInjectionModal(id) {
+        const box = LIVE_CAJAS_STATUS.find(c => c.id === id);
+        if(!box) return;
+
+        currentInjectionId = id;
+        document.getElementById('modal-title').textContent = `Inyección de Efectivo - ${box.desc}`;
+        document.getElementById('modal-subtitle').textContent = `Cajero: ${box.cajero} | Saldo Actual: ${box.saldo.toLocaleString('es-PY')} Gs`;
+        document.getElementById('inj-monto').value = '';
+        document.getElementById('inj-motivo').value = '';
+        document.getElementById('modal-inyeccion').classList.remove('hidden');
+       
+        // Setup confirm click
+        const btn = document.getElementById('btn-confirm-inj');
+        btn.onclick = function() { confirmInjection(id); };
+    }
+
+    function closeInjectionModal() {
+        document.getElementById('modal-inyeccion').classList.add('hidden');
+        currentInjectionId = null;
+    }
+
+    function confirmInjection(id) {
+        const montoStr = document.getElementById('inj-monto').value.replace(/\./g, '');
+        const monto = parseInt(montoStr) || 0;
+        const motivo = document.getElementById('inj-motivo').value;
+        const origen = document.getElementById('inj-origen').value;
+
+        if(monto <= 0) return alert("Ingrese un monto válido.");
+        if(!motivo) return alert("Debe ingresar un motivo para la auditoría.");
+
+        const box = LIVE_CAJAS_STATUS.find(c => c.id === id);
+        if(box) {
+            box.saldo += monto;
+            // Si es la caja del usuario actual (001), actualizar dashboard y estado global
+            if(id === '001') {
+                appState.montoApertura += monto; // Considerar la inyección como parte del fondo inicial para la simulación de arqueo
+                document.getElementById('dash-saldo-actual').textContent = box.saldo.toLocaleString('es-PY', { style: 'currency', currency: 'PYG', minimumFractionDigits: 0 });
+            }
+           
+            renderTesoreriaTable();
+            closeInjectionModal();
+            alert(`Transacción Exitosa: Se insertaron ${monto.toLocaleString('es-PY')} Gs a la Caja ${box.id}.\nOrigen: ${origen}`);
+        }
+    }
+
+    // --- LOGICA ASIGNACIÓN DE CAJAS ---
+    function populateAssignFormSelects() {
+        const cajaSelect = document.getElementById('assign-caja-select');
+        if(!cajaSelect) return;
+        cajaSelect.innerHTML = '<option value="">-- Seleccione Caja --</option>';
+        MOCK_CAJAS.forEach(c => {
+            const opt = document.createElement('option');
+            opt.value = c.id;
+            opt.textContent = `${c.codigo} - ${c.descripcion}`;
+            opt.dataset.tipo = c.tipo;
+            opt.dataset.min = c.minApertura;
+            cajaSelect.appendChild(opt);
+        });
+    }
+
+    function renderAssignmentsTable() {
+        const tbody = document.getElementById('assign-table-body');
+        if(!tbody) return;
+        tbody.innerHTML = '';
+        MOCK_ASSIGNMENTS.forEach(a => {
+            tbody.insertAdjacentHTML('beforeend', `
+                <tr class="hover:bg-gray-50 transition-colors">
+                    <td class="p-4 text-sm font-bold text-gray-700">#${a.id}</td>
+                    <td class="p-4 text-sm text-gray-600">${a.sucursal}</td>
+                    <td class="p-4 text-sm text-gray-600">${a.agencia}</td>
+                    <td class="p-4 text-sm font-mono text-gray-600">${a.codigo}</td>
+                    <td class="p-4 text-sm font-medium text-gray-800">${a.caja}</td>
+                    <td class="p-4 text-sm text-gray-600">${a.tipo}</td>
+                    <td class="p-4 text-sm font-medium text-gray-800">${a.cajero}</td>
+                    <td class="p-4 text-center">
+                        <span class="px-3 py-1 text-xs font-bold rounded-full ${a.estado === 'Activo' ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'}">
+                            ${a.estado}
+                        </span>
+                    </td>
+                    <td class="p-4 text-center">
+                        <button onclick="editAssignment(${a.id})" class="inline-flex items-center justify-center w-8 h-8 rounded-full bg-yellow-50 text-yellow-600 hover:bg-yellow-100 hover:text-yellow-700 shadow-sm border border-yellow-200 transition-all transform hover:scale-110" title="Editar Asignación">
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z"></path></svg>
+                        </button>
+                    </td>
+                </tr>
+            `);
+        });
+    }
+
+    function showAssignForm() {
+        const listView = document.getElementById('assign-cajas-view');
+        const formView = document.getElementById('assign-cajas-form-view');
+        if (listView) listView.classList.remove('active');
+        if (formView) {
+            formView.classList.remove('hidden-section');
+            formView.classList.add('active');
+           
+            // Reset fields
+            document.getElementById('form-assign-id').value = '';
+            document.getElementById('assign-caja-select').value = '';
+            document.getElementById('assign-cajero').value = '';
+            document.getElementById('assign-fecha').value = '';
+            document.getElementById('assign-tipo').value = '';
+            document.getElementById('assign-importe').value = '';
+            document.getElementById('assign-obs').value = '';
+           
+            // Set Titles
+            document.getElementById('form-assign-title-crumb').textContent = 'Nueva Asignación';
+            document.getElementById('form-assign-header-title').innerHTML = `
+                <svg class="w-5 h-5 mr-2 opacity-80" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path></svg>
+                NUEVA ASIGNACIÓN
+            `;
+        }
+    }
+
+    function editAssignment(id) {
+        const assign = MOCK_ASSIGNMENTS.find(a => a.id === id);
+        if(!assign) return;
+       
+        showAssignForm();
+
+        // Populate Form
+        document.getElementById('form-assign-id').value = assign.id;
+       
+        // Try to match Caja select logic by text/value. Since MOCK_ASSIGNMENTS stores composed strings, we try a best effort match or finding the box with the code.
+        const selectBox = document.getElementById('assign-caja-select');
+        for (let i = 0; i < selectBox.options.length; i++) {
+            if (selectBox.options[i].text.includes(assign.codigo)) {
+                selectBox.selectedIndex = i;
+                break;
+            }
+        }
+       
+        document.getElementById('assign-cajero').value = assign.cajero;
+        document.getElementById('assign-tipo').value = assign.tipo;
+        document.getElementById('assign-importe').value = (assign.importe || 0).toLocaleString('es-PY');
+        // Mock Date (current for simplicity as mock didn't have ISO)
+        // document.getElementById('assign-fecha').value = ...
+       
+        // Titles
+        document.getElementById('form-assign-title-crumb').textContent = 'Editar';
+        document.getElementById('form-assign-header-title').innerHTML = `
+             <svg class="w-5 h-5 mr-2 opacity-80" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"></path></svg>
+             EDITAR ASIGNACIÓN #${id}
+        `;
+    }
+
+    function updateAssignDetails() {
+        const select = document.getElementById('assign-caja-select');
+        const selectedOpt = select.options[select.selectedIndex];
+       
+        if (selectedOpt && selectedOpt.value) {
+            document.getElementById('assign-tipo').value = selectedOpt.dataset.tipo;
+            const min = parseInt(selectedOpt.dataset.min);
+            document.getElementById('assign-importe').value = min.toLocaleString('es-PY');
+        } else {
+            document.getElementById('assign-tipo').value = '';
+            document.getElementById('assign-importe').value = '';
+        }
+    }
+
+    function saveAssignment() {
+        const id = document.getElementById('form-assign-id').value;
+        const sucursal = document.getElementById('assign-sucursal').value;
+        const agencia = document.getElementById('assign-agencia').value;
+        const cajaSelect = document.getElementById('assign-caja-select');
+        const cajaText = cajaSelect.options[cajaSelect.selectedIndex].text;
+        const cajero = document.getElementById('assign-cajero').value;
+        const tipo = document.getElementById('assign-tipo').value;
+        const importeStr = document.getElementById('assign-importe').value.replace(/\./g, '');
+        const estado = document.querySelector('input[name="assign_estado"]:checked').value;
+
+        if (!cajaSelect.value || !cajero || !importeStr) {
+             alert("Complete los campos requeridos.");
+             return;
+        }
+
+        const assignObj = {
+            id: id ? parseInt(id) : (MOCK_ASSIGNMENTS.length + 1),
+            sucursal, agencia,
+            codigo: cajaText.split('-')[0].trim(), // Extract code from "001 - Caja..."
+            caja: cajaText,
+            tipo, cajero,
+            importe: parseInt(importeStr),
+            estado
+        };
+
+        if (id) {
+            const idx = MOCK_ASSIGNMENTS.findIndex(a => a.id == id);
+            if(idx !== -1) MOCK_ASSIGNMENTS[idx] = assignObj;
+            alert("Asignación actualizada.");
+        } else {
+            MOCK_ASSIGNMENTS.push(assignObj);
+            alert("Nueva asignación creada.");
+        }
+
+        cancelAssign();
+    }
+
+    function cancelAssign() {
+         const listView = document.getElementById('assign-cajas-view');
+        const formView = document.getElementById('assign-cajas-form-view');
+        if (formView) {
+            formView.classList.add('hidden-section');
+            formView.classList.remove('active');
+        }
+        if (listView) {
+            listView.classList.remove('hidden-section');
+            listView.classList.add('active');
+        }
+        renderAssignmentsTable();
+    }
+
+    // --- LOGICA MANTENIMIENTO CAJAS ---
+    function renderCajasTable() {
+        const tbody = document.getElementById('cajas-table-body');
+        if (!tbody) return;
+       
+        tbody.innerHTML = '';
+        MOCK_CAJAS.forEach(c => {
+            tbody.insertAdjacentHTML('beforeend', `
+                <tr class="hover:bg-gray-50 transition-colors">
+                    <td class="p-4 text-sm font-bold text-gray-700">#${c.id}</td>
+                    <td class="p-4 text-sm font-mono text-gray-600">${c.codigo}</td>
+                    <td class="p-4 text-sm font-medium text-gray-800">${c.descripcion}</td>
+                    <td class="p-4 text-sm text-gray-600">${c.tipo}</td>
+                    <td class="p-4 text-sm text-gray-600">${c.moneda}</td>
+                    <td class="p-4 text-sm text-right font-mono text-gray-700">${c.minApertura.toLocaleString('es-PY')}</td>
+                    <td class="p-4 text-sm text-gray-600">${c.sucursal}</td>
+                    <td class="p-4 text-center">
+                        <span class="px-3 py-1 text-xs font-bold rounded-full ${c.estado === 'Activo' ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'}">
+                            ${c.estado}
+                        </span>
+                    </td>
+                    <td class="p-4 text-center">
+                        <button onclick="editCaja(${c.id})" class="inline-flex items-center justify-center w-8 h-8 rounded-full bg-yellow-50 text-yellow-600 hover:bg-yellow-100 hover:text-yellow-700 shadow-sm border border-yellow-200 transition-all transform hover:scale-110" title="Editar Caja">
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z"></path></svg>
+                        </button>
+                    </td>
+                </tr>
+            `);
+        });
+    }
+
+    function showCajasForm() {
+        const listView = document.getElementById('mant-cajas-view');
+        const formView = document.getElementById('mant-cajas-form-view');
+
+        if (listView) listView.classList.remove('active');
+       
+        if (formView) {
+            formView.classList.remove('hidden-section');
+            formView.classList.add('active');
+           
+            // Reset form for new entry
+            const inputs = formView.querySelectorAll('input');
+            if (inputs) inputs.forEach(i => i.value = '');
+           
+            // Reset Selects
+            formView.querySelector('select').selectedIndex = 0;
+           
+            // Set Titles
+            document.getElementById('form-caja-title-crumb').textContent = 'Agregar';
+            document.getElementById('form-caja-header-title').innerHTML = `
+                <svg class="w-5 h-5 mr-2 opacity-80" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path></svg>
+                AGREGAR NUEVA CAJA
+            `;
+           
+            // Clear Hidden ID
+            document.getElementById('form-caja-id').value = '';
+        }
+    }
+
+    function editCaja(id) {
+        const caja = MOCK_CAJAS.find(c => c.id === id);
+        if(!caja) return;
+
+        showCajasForm(); // Shows form view
+       
+        // Populate Data
+        document.getElementById('form-caja-id').value = caja.id;
+        document.getElementById('form-caja-codigo').value = caja.codigo;
+        document.getElementById('form-caja-desc').value = caja.descripcion;
+        document.getElementById('form-caja-tipo').value = caja.tipo;
+        document.getElementById('form-caja-moneda').value = caja.moneda;
+        document.getElementById('form-caja-min').value = caja.minApertura.toLocaleString('es-PY');
+        // Simple mapping for demo
+        document.getElementById('form-caja-sucursal').value = caja.sucursal;
+       
+        // Update Titles
+        document.getElementById('form-caja-title-crumb').textContent = 'Editar';
+        document.getElementById('form-caja-header-title').innerHTML = `
+            <svg class="w-5 h-5 mr-2 opacity-80" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"></path></svg>
+            EDITAR CAJA #${caja.id}
+        `;
+    }
+
+    function saveCaja() {
+        const id = document.getElementById('form-caja-id').value;
+        const codigo = document.getElementById('form-caja-codigo').value;
+        const desc = document.getElementById('form-caja-desc').value;
+        const tipo = document.getElementById('form-caja-tipo').value;
+        const moneda = document.getElementById('form-caja-moneda').value;
+        const minStr = document.getElementById('form-caja-min').value.replace(/\./g, '');
+        const sucursal = document.getElementById('form-caja-sucursal').value;
+        const agencia = document.getElementById('form-caja-agencia').value;
+        // Radio buttons logic
+        const estado = document.querySelector('input[name="caja_estado"]:checked').value;
+
+        if(!codigo || !desc || !minStr) {
+            alert("Por favor complete los campos obligatorios (*)");
+            return;
+        }
+
+        if (id) {
+            // Update Existing
+            const index = MOCK_CAJAS.findIndex(c => c.id == id);
+            if (index !== -1) {
+                MOCK_CAJAS[index] = {
+                    ...MOCK_CAJAS[index],
+                    codigo, descripcion: desc, tipo, moneda,
+                    minApertura: parseInt(minStr) || 0,
+                    sucursal, agencia, estado
+                };
+                alert("Caja actualizada correctamente");
+            }
+        } else {
+            // Create New
+            const newId = MOCK_CAJAS.length + 1;
+            MOCK_CAJAS.push({
+                id: newId,
+                codigo: codigo,
+                descripcion: desc,
+                tipo: tipo,
+                moneda: moneda,
+                minApertura: parseInt(minStr) || 0,
+                sucursal: sucursal, // Simplified for mock
+                agencia: agencia,
+                estado: estado
+            });
+            alert("Caja creada correctamente");
+        }
+
+        cancelCaja(); // Return to list
+    }
+
+    function cancelCaja() {
+        const listView = document.getElementById('mant-cajas-view');
+        const formView = document.getElementById('mant-cajas-form-view');
+       
+        if (formView) {
+            formView.classList.add('hidden-section');
+            formView.classList.remove('active');
+        }
+       
+        if (listView) {
+            listView.classList.remove('hidden-section');
+            listView.classList.add('active');
+        }
+       
+        renderCajasTable();
+    }
+
+
+    function setTransactionMode(mode) {
+        document.getElementById('ingresos-container').classList.add('hidden-section');
+        document.getElementById('egresos-container').classList.add('hidden-section');
+       
+        const btnIngreso = document.getElementById('btn-mode-ingreso');
+        const btnEgreso = document.getElementById('btn-mode-egreso');
+
+        // Reset styles
+        btnIngreso.className = "px-6 py-2 text-sm font-medium rounded transition-colors text-gray-500 hover:bg-gray-50";
+        btnEgreso.className = "px-6 py-2 text-sm font-medium rounded transition-colors text-gray-500 hover:bg-gray-50";
+
+        if(mode === 'ingreso') {
+            document.getElementById('ingresos-container').classList.remove('hidden-section');
+            btnIngreso.className = "px-6 py-2 text-sm font-medium rounded transition-colors bg-green-50 text-yoayu-green border border-yoayu-green font-bold";
+        } else {
+            document.getElementById('egresos-container').classList.remove('hidden-section');
+            btnEgreso.className = "px-6 py-2 text-sm font-medium rounded transition-colors bg-orange-50 text-orange-600 border border-orange-500 font-bold";
+        }
+    }
+
+    // --- LOGICA DE CAJA ---
+    function searchMember() {
+        const id = document.getElementById('member-search-input').value.trim();
+        const data = MOCK_MEMBER_BALANCES[id];
+        const moraDetailEl = document.getElementById('mora-detail-data');
+
+        if(data) {
+            document.getElementById('member-info').classList.remove('hidden');
+            document.getElementById('member-name').textContent = data.name;
+            document.getElementById('member-id').textContent = "Socio N°: " + data.id;
+           
+            document.getElementById('balance-ahorro').textContent = formatCurrency(data.saldoAhorro);
+            document.getElementById('balance-aporte').textContent = formatCurrency(data.saldoAporte);
+            document.getElementById('balance-capital-vencido').textContent = formatCurrency(data.capitalVencido);
+            document.getElementById('balance-tarjeta').textContent = formatCurrency(data.saldoTarjeta);
+           
+            // Lógica específica para barra de mora (Socio 1001)
+            if(data.capitalVencido > 0 || data.moraAporte > 0) {
+                const totalMora = data.moraCredito + data.moraAporte;
+                moraDetailEl.innerHTML = `
+                    **MORA REGISTRADA:** Total Vencido: <span class="font-extrabold">${formatCurrency(data.capitalVencido)}</span>.
+                    Créditos/Tarjetas: <span class="font-extrabold">${formatCurrency(data.moraCredito)}</span> |
+                    Aportes/Fondos: <span class="font-extrabold">${formatCurrency(data.moraAporte)}</span>.
+                `;
+                moraDetailEl.className = "bg-red-50 border border-red-100 text-red-700 text-xs py-2 px-4 rounded text-center font-medium";
+            } else {
+                moraDetailEl.textContent = "Sin mora registrada.";
+                moraDetailEl.className = "bg-yellow-50 border border-yellow-100 text-yellow-700 text-xs py-2 px-4 rounded text-center font-medium";
+            }
+
+            // Seleccionar pestaña de créditos si hay mora
+            const defaultTab = data.capitalVencido > 0 ? 'creditos' : 'aportes';
+            const defaultTabBtn = document.querySelector(`button[data-tab="${defaultTab}"]`);
+            if (defaultTabBtn) setActiveTab(defaultTabBtn);
+            else loadObligationsTable('aportes');
+           
+            // Reiniciar totales y pagos al buscar nuevo socio
+            currentTotal = 0; selectedObligations = []; totalPaid = 0; paymentLineId = 0;
+            document.getElementById('total-payment').textContent = '0 Gs';
+            document.getElementById('payment-methods-container').innerHTML = '';
+            calculateChange();
+
+
+        } else {
+            alert("Socio no encontrado. Pruebe 1001, 1002, etc.");
+            // Reset UI
+             document.getElementById('member-info').classList.add('hidden');
+             document.getElementById('balance-ahorro').textContent = '0 Gs';
+             document.getElementById('balance-aporte').textContent = '0 Gs';
+             document.getElementById('balance-capital-vencido').textContent = '0 Gs';
+             document.getElementById('balance-tarjeta').textContent = '0 Gs';
+             document.getElementById('obligation-table-body').innerHTML = '<tr><td colspan="6" class="p-4 text-center text-gray-400">Busque un socio para ver datos.</td></tr>';
+        }
+    }
+
+    function setActiveTab(btn) {
+        document.querySelectorAll('button[data-tab]').forEach(b => {
+            b.classList.remove('text-yoayu-green', 'border-yoayu-green', 'font-bold');
+            b.classList.add('text-gray-500', 'border-transparent');
+        });
+        btn.classList.remove('text-gray-500', 'border-transparent');
+        btn.classList.add('text-yoayu-green', 'border-yoayu-green', 'font-bold');
+        loadObligationsTable(btn.getAttribute('data-tab'));
+    }
+
+    function loadObligationsTable(type) {
+        const tbody = document.getElementById('obligation-table-body'); tbody.innerHTML = '';
+        const id = document.getElementById('member-search-input').value.trim();
+        if(!id || !MOCK_MEMBER_BALANCES[id]) {
+            tbody.innerHTML = '<tr><td colspan="6" class="p-4 text-center text-gray-400">Busque un socio para ver datos.</td></tr>';
+            return;
+        }
+
+        const obs = (MOCK_MEMBER_OBLIGATIONS[id] || []).filter(o => o.type === type);
+        if(obs.length === 0) { tbody.innerHTML = '<tr><td colspan="6" class="p-4 text-center text-gray-400">No hay obligaciones pendientes en este rubro.</td></tr>'; return; }
+
+        obs.forEach(ob => {
+            const isChecked = selectedObligations.includes(ob.id) ? 'checked' : '';
+            tbody.insertAdjacentHTML('beforeend', `
+                <tr class="hover:bg-gray-50">
+                    <td class="p-3"><input type="checkbox" ${isChecked} onchange="toggleTotal(this, ${ob.total}, '${ob.id}')" class="w-4 h-4 text-yoayu-green rounded focus:ring-yoayu-green"></td>
+                    <td class="p-3 font-medium text-gray-700">${ob.concept}</td>
+                    <td class="p-3 text-gray-500">${ob.date}</td>
+                    <td class="p-3 text-right text-gray-600">${formatCurrency(ob.amount)}</td>
+                    <td class="p-3 text-right text-red-500">
+                       ${formatCurrency(ob.mora)}
+                       ${ob.moraDetails ? `<div class="text-[10px] text-gray-500 leading-tight mt-1 bg-red-50/50 p-1 rounded border border-red-100">
+                            ${ob.moraDetails.moratorio ? `<div>Int. Mor.: <span class="font-semibold">${formatCurrency(ob.moraDetails.moratorio)}</span></div>` : ''}
+                            ${ob.moraDetails.punitorio ? `<div>Punitorio: <span class="font-semibold">${formatCurrency(ob.moraDetails.punitorio)}</span></div>` : ''}
+                            ${ob.moraDetails.gestion ? `<div>Gestión: <span class="font-semibold">${formatCurrency(ob.moraDetails.gestion)}</span></div>` : ''}
+                       </div>` : ''}
+                    </td>
+                    <td class="p-3 text-right font-bold text-gray-800">${formatCurrency(ob.total)}</td>
+                </tr>`);
+        });
+    }
+
+    function toggleTotal(cb, amount, id) {
+        if(cb.checked) { currentTotal += amount; selectedObligations.push(id); }
+        else { currentTotal -= amount; selectedObligations = selectedObligations.filter(x => x !== id); }
+        document.getElementById('total-payment').textContent = formatCurrency(currentTotal);
+       
+        const btn = document.getElementById('add-payment-btn');
+        btn.disabled = currentTotal <= 0;
+       
+        // Si se selecciona la primera obligación, añadir el método de pago por defecto (Efectivo)
+        if(currentTotal > 0 && document.getElementById('payment-methods-container').children.length === 0) addPaymentMethod('Efectivo');
+       
+        calculateChange();
+    }
+
+    function addPaymentMethod(initialMethod = 'Efectivo') {
+        paymentLineId++;
+        const container = document.getElementById('payment-methods-container');
+        const div = document.createElement('div');
+        div.id = `payment-line-${paymentLineId}`;
+        div.className = 'p-3 border rounded bg-white text-sm shadow-sm';
+       
+        let bankOptions = '';
+        BANCOS_PY.forEach(b => bankOptions += `<option value="${b}">${b}</option>`);
+
+        div.innerHTML = `
+            <div class="flex space-x-2 mb-2">
+                <select id="method-${paymentLineId}" onchange="updatePaymentDetails(this)" class="p-2 border rounded flex-1">
+                    <option value="Efectivo" ${initialMethod === 'Efectivo' ? 'selected' : ''}>Efectivo</option>
+                    <option value="Cheque" ${initialMethod === 'Cheque' ? 'selected' : ''}>Cheque</option>
+                    <option value="Transferencia" ${initialMethod === 'Transferencia' ? 'selected' : ''}>Transf.</option>
+                    <option value="Tarjeta" ${initialMethod === 'Tarjeta' ? 'selected' : ''}>Tarjeta</option>
+                </select>
+                <input type="number" id="amount-${paymentLineId}" oninput="calculateChange()" placeholder="Monto" class="p-2 border rounded w-32 text-right font-bold text-gray-700">
+                <button onclick="removePaymentMethod(this)" class="text-red-500 hover:text-red-700 px-2">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
+                </button>
+            </div>
+            <div id="details-${paymentLineId}" class="bg-gray-50 p-2 rounded hidden"></div>
+            <!-- Template oculto para bancos -->
+            <div id="bank-template-${paymentLineId}" class="hidden">
+                 <div class="grid grid-cols-1 gap-2 mt-2">
+                    <select class="w-full p-2 text-xs border rounded">${bankOptions}</select>
+                    <div class="flex gap-2">
+                        <input placeholder="N° Doc/Cheque" class="w-1/2 p-2 text-xs border rounded">
+                        <input type="date" class="w-1/2 p-2 text-xs border rounded">
+                    </div>
+                </div>
+            </div>
+        `;
+        container.appendChild(div);
+        updatePaymentDetails(div.querySelector('select')); // Init details if not cash
+    }
+
+    function removePaymentMethod(button) {
+        button.closest('.p-3.border.rounded').remove();
+        calculateChange();
+    }
+
+    function updatePaymentDetails(select) {
+        const id = select.id.split('-')[1];
+        const detailsDiv = document.getElementById(`details-${id}`);
+        const bankTemplate = document.getElementById(`bank-template-${id}`);
+       
+        if(select.value === 'Efectivo') {
+            detailsDiv.classList.add('hidden');
+            detailsDiv.innerHTML = '';
+        } else if (select.value === 'Tarjeta') {
+            detailsDiv.classList.remove('hidden');
+            detailsDiv.innerHTML = '<input placeholder="N° Voucher / Lote" class="w-full p-2 text-xs border rounded">';
+        } else {
+            // Cheque o Transferencia
+            detailsDiv.classList.remove('hidden');
+            detailsDiv.innerHTML = bankTemplate.innerHTML;
+        }
+    }
+
+    function calculateChange() {
+        totalPaid = 0;
+        document.querySelectorAll('[id^="amount-"]').forEach(i => totalPaid += (parseInt(i.value) || 0));
+        document.getElementById('total-received-amount').textContent = formatCurrency(totalPaid);
+       
+        const diff = totalPaid - currentTotal;
+        const changeEl = document.getElementById('change-amount');
+        const calculatedChange = Math.max(0, diff);
+
+        changeEl.textContent = formatCurrency(calculatedChange);
+        changeEl.classList.toggle('text-red-500', calculatedChange > 0);
+        changeEl.classList.toggle('text-yoayu-green', calculatedChange === 0);
+
+        // Habilitar cobro solo si cubre el monto
+        document.getElementById('process-payment-btn').disabled = (diff < 0) || (currentTotal === 0);
+    }
+
+    function processPayment() {
+        const id = document.getElementById('member-search-input').value.trim();
+        const memberName = MOCK_MEMBER_BALANCES[id]?.name || "Desconocido";
+       
+        if (currentTotal <= 0) return; // Should be disabled, but safety first
+       
+        const changeAmount = totalPaid - currentTotal;
+       
+        // Recopilar detalles de obligaciones pagadas
+        const paidObligationsDetails = selectedObligations.map(obId => {
+            return getObligationDetails(obId, id);
+        }).filter(Boolean); // Filter out any undefined/null
+
+        // Recopilar formas de pago
+        const paymentMethodsUsed = [];
+        document.querySelectorAll('[id^="payment-line-"]').forEach(line => {
+            const lineId = line.id.split('-')[2];
+            const method = document.getElementById(`method-${lineId}`).value;
+            const amount = parseInt(document.getElementById(`amount-${lineId}`).value) || 0;
+            paymentMethodsUsed.push({ method, amount });
+        });
+
+        // Registrar transacción
+        const newReceipt = 'REC-T' + new Date().getTime().toString().slice(-6);
+        MOCK_TRANSACTIONS.unshift({
+            date: new Date().toISOString().replace('T', ' ').substring(0, 16),
+            type: 'Ingreso', receipt: newReceipt,
+            member: memberName, concept: 'Cobro de Obligaciones',
+            method: paymentMethodsUsed.length === 1 ? paymentMethodsUsed[0].method : 'Múltiple',
+            amount: currentTotal
+        });
+
+        // Mostrar el modal de resumen
+        showReceiptModal({
+            receipt: newReceipt,
+            member: memberName,
+            total: currentTotal,
+            paid: totalPaid,
+            change: Math.max(0, changeAmount),
+            obligations: paidObligationsDetails,
+            methods: paymentMethodsUsed
+        });
+       
+        // Limpiar interfaz
+        currentTotal = 0; selectedObligations = []; totalPaid = 0;
+        document.getElementById('total-payment').textContent = '0 Gs';
+        document.getElementById('payment-methods-container').innerHTML = '';
+        calculateChange();
+       
+        // Deseleccionar todas las obligaciones en la tabla
+        document.querySelectorAll('#obligation-table-body input[type="checkbox"]').forEach(cb => cb.checked = false);
+        // Volver a cargar la tabla para mostrar el estado actualizado de saldos
+        loadObligationsTable(document.querySelector('button[data-tab].text-yoayu-green').getAttribute('data-tab'));
+    }
+
+    // --- LOGICA MODAL DE COBRO ---
+    function showReceiptModal(details) {
+        document.getElementById('receipt-number').textContent = details.receipt;
+        document.getElementById('receipt-member-name').textContent = details.member;
+        document.getElementById('receipt-total-payment').textContent = formatCurrency(details.total);
+        document.getElementById('receipt-total-received').textContent = formatCurrency(details.paid);
+        document.getElementById('receipt-change-amount').textContent = formatCurrency(details.change);
+       
+        // Listado de Obligaciones
+        const ulOblig = document.getElementById('receipt-obligations-list');
+        ulOblig.innerHTML = '';
+       
+        details.obligations.forEach(ob => {
+            const li = document.createElement('li');
+            li.className = 'flex justify-between';
+            li.innerHTML = `
+                <span class="text-gray-600 truncate">${ob.concept}</span>
+                <span class="font-bold">${formatCurrency(ob.total)}</span>
+            `;
+            ulOblig.appendChild(li);
+        });
+
+        // Listado de Medios de Pago (Añadido para el resumen)
+        const ulMethods = document.createElement('ul');
+        ulMethods.className = 'space-y-1 text-xs text-gray-800 border-l-2 pl-2 border-gray-300 max-h-32 overflow-y-auto mt-2 pt-2 border-t';
+        details.methods.forEach(m => {
+             ulMethods.innerHTML += `<li class="flex justify-between"><span>${m.method}</span><span class="font-bold text-gray-700">${formatCurrency(m.amount)}</span></li>`;
+        });
+       
+        // Insertar listado de métodos
+        if (details.methods.length > 1 || (details.methods.length === 1 && details.methods[0].amount !== details.paid)) {
+             const h4 = document.createElement('h4');
+             h4.className = 'text-xs font-bold text-gray-600 uppercase mb-2 mt-4 pt-2 border-t border-gray-100';
+             h4.textContent = 'Medios de Pago Recibidos:';
+             ulOblig.insertAdjacentElement('afterend', ulMethods);
+             ulOblig.insertAdjacentElement('afterend', h4);
+        }
+
+        document.getElementById('modal-cobro-resumen').classList.remove('hidden');
+    }
+
+    function closeReceiptModal() {
+        document.getElementById('modal-cobro-resumen').classList.add('hidden');
+    }
+   
+    function printReceipt() {
+        alert("Generando PDF de recibo / Factura. (Simulación de Impresión)");
+    }
+
+    // --- LOGICA DE EGRESOS ---
+    function updateEgresoSubtipos() {
+        const grupo = document.getElementById('egreso-grupo').value;
+        const subSelect = document.getElementById('egreso-subtipo');
+        subSelect.innerHTML = '<option value="">-- Seleccione Concepto --</option>';
+        subSelect.disabled = !grupo;
+       
+        if (grupo && EGRESO_TYPES[grupo]) {
+            subSelect.classList.remove('bg-gray-100');
+            EGRESO_TYPES[grupo].subs.forEach(sub => {
+                const opt = document.createElement('option');
+                opt.value = sub; opt.textContent = sub;
+                subSelect.appendChild(opt);
+            });
+        } else {
+            subSelect.classList.add('bg-gray-100');
+        }
+    }
+
+    function toggleEgresoBankFields() {
+        const metodo = document.getElementById('egreso-metodo').value;
+        const fields = document.getElementById('egreso-bank-fields');
+        if(metodo === 'Cheque' || metodo === 'Transferencia') {
+            fields.classList.remove('hidden');
+        } else {
+            fields.classList.add('hidden');
+        }
+    }
+
+    function processEgreso() {
+        const monto = parseInt(document.getElementById('egreso-monto-input').value) || 0;
+        const sub = document.getElementById('egreso-subtipo').value;
+        if(monto <= 0 || !sub) return alert("Complete los datos del egreso.");
+       
+        MOCK_TRANSACTIONS.unshift({
+            date: new Date().toISOString().replace('T', ' ').substring(0, 16),
+            type: 'Egreso', receipt: document.getElementById('egreso-doc').value || 'S/N',
+            member: document.getElementById('egreso-beneficiario').value || 'Sin Nombre',
+            concept: sub,
+            categoryId: document.getElementById('egreso-grupo').value,
+            method: document.getElementById('egreso-metodo').value,
+            amount: monto
+        });
+       
+        alert("Egreso registrado correctamente.");
+        document.getElementById('egreso-monto-input').value = '';
+        document.getElementById('total-egreso-display').textContent = 'Gs. 0';
+        updateCierreData();
+    }
+
+    // --- APERTURA Y CIERRE ---
+    function realizarApertura() {
+        // Read amount from read-only field (removing dots)
+        const montoStr = document.getElementById('monto-apertura-input').value.replace(/\./g, '');
+        const monto = parseInt(montoStr) || 0;
+       
+        appState.cajaAbierta = true;
+        appState.montoApertura = monto;
+        appState.fechaApertura = document.getElementById('apertura-fecha-input').value || new Date().toISOString();
+       
+        // Sincronizar estado de caja LIVE (asumiendo que esta es la caja 001)
+        const liveBox = LIVE_CAJAS_STATUS.find(c => c.id === '001');
+        if(liveBox) {
+            liveBox.estado = 'Abierta';
+            liveBox.saldo = monto;
+        }
+
+        // Hide form, show success
+        document.querySelector('#apertura-view > .card').classList.add('hidden');
+        document.getElementById('apertura-info').classList.remove('hidden');
+        document.getElementById('apertura-display-monto').textContent = formatCurrency(monto);
+       
+        // Note: Sidebar status remains closed/red as per previous instruction
+        updateDashboard(); // Asegura que el dashboard se actualice al abrir
+    }
+
+    function switchCierreTab(tabName, btn) {
+        document.getElementById('tab-cierre-ingresos').classList.toggle('hidden', tabName !== 'ingresos');
+        document.getElementById('tab-cierre-egresos').classList.toggle('hidden', tabName !== 'egresos');
+       
+        const buttons = btn.parentElement.querySelectorAll('button');
+        buttons.forEach(b => {
+            b.className = "py-3 text-sm font-medium text-gray-500 border-b-2 border-transparent hover:text-gray-700 focus:outline-none";
+        });
+        btn.className = "py-3 text-sm font-medium border-b-2 border-yoayu-green text-yoayu-green focus:outline-none";
+    }
+
+    function initCierreView() {
+        const tbody = document.getElementById('billetaje-body');
+        tbody.innerHTML = '';
+        DENOMINATIONS.forEach(denom => {
+            if (!billCounts[denom]) billCounts[denom] = 0;
+            tbody.insertAdjacentHTML('beforeend', `
+                <tr class="hover:bg-gray-50">
+                    <td class="p-2 text-gray-700 font-mono text-right">${denom.toLocaleString('es-PY')}</td>
+                    <td class="p-2 text-center"><input type="number" min="0" class="w-16 text-center p-1 border rounded" oninput="updateBillCount(${denom}, this.value)" value="${billCounts[denom] || ''}"></td>
+                    <td class="p-2 text-right font-semibold text-gray-800" id="total-denom-${denom}">${(billCounts[denom] * denom).toLocaleString('es-PY')}</td>
+                </tr>
+            `);
+        });
+        updateBillCount(0, 0);
+    }
+
+    function updateBillCount(denom, qty) {
+        if(denom > 0) {
+            billCounts[denom] = parseInt(qty) || 0;
+            document.getElementById(`total-denom-${denom}`).textContent = (billCounts[denom] * denom).toLocaleString('es-PY');
+        }
+        let total = 0;
+        for (const [d, q] of Object.entries(billCounts)) total += d * q;
+       
+        document.getElementById('total-billetaje').textContent = formatCurrency(total);
+        document.getElementById('real-efectivo').textContent = total.toLocaleString('es-PY');
+        updateConciliacion();
+    }
+
+    function updateCierreData() {
+        const apertura = appState.montoApertura || 0;
+        document.getElementById('cierre-monto-apertura').textContent = formatCurrency(apertura);
+        document.getElementById('cierre-fecha-apertura').textContent = appState.fechaApertura ? new Date(appState.fechaApertura).toLocaleTimeString() : '--';
+
+        let teoEfectivo = apertura;
+        let teoCheque = 0; let teoTarjeta = 0; let teoTransf = 0;
+        let totalEgresos = 0;
+        let totalIngresos = 0;
+       
+        let egresosAgrupados = { "1": [], "2": [], "3": [], "4": [], "5": [], "6": [] };
+
+        MOCK_TRANSACTIONS.forEach(tx => {
+            if (tx.type === 'Ingreso') {
+                totalIngresos += tx.amount;
+                // Simulación: asumir que todos los ingresos son "Efectivo", excepto si el método es Cheque/Transferencia
+                if (tx.method === 'Efectivo' || tx.method === 'Múltiple') teoEfectivo += tx.amount;
+                else if (tx.method.includes('Cheque')) teoCheque += tx.amount;
+                else if (tx.method.includes('Tarjeta')) teoTarjeta += tx.amount;
+                else if (tx.method.includes('Transferencia')) teoTransf += tx.amount;
+            } else {
+                totalEgresos += tx.amount;
+                if (tx.method.includes('Efectivo')) teoEfectivo -= tx.amount;
+               
+                const cat = tx.categoryId || "6";
+                if(egresosAgrupados[cat]) egresosAgrupados[cat].push(tx);
+            }
+        });
+       
+        // Para simular mejor el saldo de caja, actualizamos el saldo del LIVE_CAJAS_STATUS
+        // con la data acumulada si la caja está abierta (solo la caja 001)
+        const liveBox = LIVE_CAJAS_STATUS.find(c => c.id === '001');
+        if (liveBox) {
+            liveBox.saldo = teoEfectivo;
+        }
+
+        // Update UI
+        document.getElementById('teo-efectivo').textContent = teoEfectivo.toLocaleString('es-PY');
+        document.getElementById('teo-cheque').textContent = teoCheque.toLocaleString('es-PY');
+        document.getElementById('teo-tarjeta').textContent = teoTarjeta.toLocaleString('es-PY');
+        document.getElementById('teo-transf').textContent = teoTransf.toLocaleString('es-PY');
+
+        // Render Egresos
+        const container = document.getElementById('egresos-categories-container');
+        container.innerHTML = '';
+        Object.keys(EGRESO_TYPES).sort().forEach(key => {
+            const txs = egresosAgrupados[key];
+            if(txs.length > 0) {
+                const total = txs.reduce((a, b) => a + b.amount, 0);
+                let rows = txs.map(t => `<tr class="text-xs text-gray-600 border-b last:border-0"><td class="p-2">${t.receipt}</td><td class="p-2">${t.concept}</td><td class="p-2 text-right">${formatCurrency(t.amount)}</td></tr>`).join('');
+                container.innerHTML += `
+                    <div class="border rounded overflow-hidden">
+                        <div class="bg-gray-100 p-2 text-xs font-bold flex justify-between"><span>${EGRESO_TYPES[key].label}</span><span>${formatCurrency(total)}</span></div>
+                        <table class="w-full bg-white">${rows}</table>
+                    </div>`;
+            }
+        });
+        document.getElementById('total-egresos-header').textContent = formatCurrency(totalEgresos);
+
+        // Footer Totals
+        appState.totalIngresos = totalIngresos; appState.totalEgresos = totalEgresos;
+        document.getElementById('footer-total-ingresos').textContent = formatCurrency(apertura + totalIngresos);
+        document.getElementById('footer-total-egresos').textContent = formatCurrency(totalEgresos);
+        document.getElementById('footer-saldo-teorico').textContent = formatCurrency((apertura + totalIngresos) - totalEgresos);
+       
+        updateConciliacion();
+    }
+
+    function updateConciliacion() {
+        // Esta función toma los montos teóricos de la caja y los compara contra lo que el cajero cargó manualmente (input-real-X) y el total del billetaje (real-efectivo).
+        const getTeoVal = (id) => parseInt(document.getElementById(id).textContent.replace(/\./g, '').replace('Gs', '')) || 0;
+        const getInput = (id) => parseInt(document.getElementById(id).value) || 0;
+
+        // 1. Efectivo
+        const teoEf = getTeoVal('teo-efectivo');
+        const realEf = getTeoVal('real-efectivo'); // Este viene del arqueo de billetaje
+        const diffEf = realEf - teoEf;
+
+        document.getElementById('diff-efectivo').textContent = diffEf.toLocaleString('es-PY');
+        document.getElementById('diff-efectivo').className = `p-2 text-right font-bold ${diffEf === 0 ? 'text-gray-400' : (diffEf > 0 ? 'text-blue-600' : 'text-red-600')}`;
+
+        // 2. Cheques
+        const teoCheque = getTeoVal('teo-cheque');
+        const realCheque = getInput('input-real-cheque');
+        const diffCheque = realCheque - teoCheque;
+        document.getElementById('diff-cheque').textContent = diffCheque.toLocaleString('es-PY');
+        document.getElementById('diff-cheque').className = `p-2 text-right font-bold ${diffCheque === 0 ? 'text-gray-400' : (diffCheque > 0 ? 'text-blue-600' : 'text-red-600')}`;
+
+        // 3. Tarjetas
+        const teoTarjeta = getTeoVal('teo-tarjeta');
+        const realTarjeta = getInput('input-real-tarjeta');
+        const diffTarjeta = realTarjeta - teoTarjeta;
+        document.getElementById('diff-tarjeta').textContent = diffTarjeta.toLocaleString('es-PY');
+        document.getElementById('diff-tarjeta').className = `p-2 text-right font-bold ${diffTarjeta === 0 ? 'text-gray-400' : (diffTarjeta > 0 ? 'text-blue-600' : 'text-red-600')}`;
+
+        // 4. Transferencias
+        const teoTransf = getTeoVal('teo-transf');
+        const realTransf = getInput('input-real-transf');
+        const diffTransf = realTransf - teoTransf;
+        document.getElementById('diff-transf').textContent = diffTransf.toLocaleString('es-PY');
+        document.getElementById('diff-transf').className = `p-2 text-right font-bold ${diffTransf === 0 ? 'text-gray-400' : (diffTransf > 0 ? 'text-blue-600' : 'text-red-600')}`;
+
+        // Totals Footer
+        const totalReal = realEf + realCheque + realTarjeta + realTransf;
+        const totalTeorico = getTeoVal('footer-saldo-teorico');
+        const diffGlobal = totalReal - totalTeorico;
+
+        document.getElementById('footer-arqueo-real').textContent = formatCurrency(totalReal);
+        const diffEl = document.getElementById('footer-diferencia');
+        diffEl.textContent = formatCurrency(diffGlobal);
+        diffEl.className = `font-bold ${diffGlobal === 0 ? 'text-green-400' : (diffGlobal > 0 ? 'text-blue-400' : 'text-red-400')}`;
+    }
+
+    function confirmarCierre() {
+        // Revisa la diferencia global antes de confirmar
+        const diffStr = document.getElementById('footer-diferencia').textContent.replace(/\./g, '').replace('Gs', '').trim();
+        const diff = parseInt(diffStr) || 0;
+
+        if (diff !== 0) {
+            // Usa un modal simulado para forzar la justificación
+            const justificacion = window.prompt(`ALERTA DE DIFERENCIA: Se detectó una diferencia de ${formatCurrency(diff)}.\n\nIngrese la justificación para proceder al cierre:`);
+            if (justificacion === null || justificacion.trim() === '') {
+                 alert("Cierre cancelado. Debe justificar la diferencia.");
+                 return;
+            }
+            alert(`Cierre forzado con diferencia de ${formatCurrency(diff)}.\nJustificación registrada.`);
+        } else {
+             alert("Cierre Exitoso. Reporte generado.");
+        }
+       
+        appState.cajaAbierta = false;
+        // Reiniciar estado y recargar (simulación de cierre de sesión)
+        location.reload();
+    }
+
+    // --- REUTILITARIOS ---
+    function formatCurrency(n) { return n.toLocaleString('es-PY', { style: 'currency', currency: 'PYG', minimumFractionDigits: 0 }); }
+   
+    function filterObligations() {
+        const tbody = document.getElementById('query-results-body'); tbody.innerHTML = '';
+        const searchVal = document.getElementById('filter-oblig-socio').value.toLowerCase();
+        const typeVal = document.getElementById('filter-oblig-tipo').value;
+        const statusVal = document.getElementById('filter-oblig-estado').value;
+
+        const filtered = MOCK_QUERY_OBLIGATIONS.filter(o => {
+            const matchesSearch = !searchVal || o.member.toLowerCase().includes(searchVal) || o.concept.toLowerCase().includes(searchVal);
+            const matchesType = !typeVal || o.concept.includes(typeVal); // Simple matching logic
+            const matchesStatus = !statusVal || o.status === statusVal;
+            return matchesSearch && matchesType && matchesStatus;
+        });
+       
+        if (filtered.length === 0) {
+            tbody.innerHTML = '<tr><td colspan="5" class="p-4 text-center text-gray-500">No se encontraron resultados</td></tr>';
+            return;
+        }
+
+        filtered.forEach(o => {
+            const statusClass = o.status==='Vencido'?'bg-red-100 text-red-800':(o.status==='Pagado'?'bg-green-100 text-green-800':'bg-yellow-100 text-yellow-800');
+            tbody.insertAdjacentHTML('beforeend', `<tr class="hover:bg-gray-50 border-b last:border-0"><td class="p-3">${o.member}</td><td class="p-3">${o.concept}</td><td class="p-3">${o.date}</td><td class="p-3 text-right font-medium">${formatCurrency(o.amount)}</td><td class="p-3 text-center"><span class="px-2 py-1 rounded text-xs font-bold ${statusClass}">${o.status}</span></td></tr>`);
+        });
+    }
+
+    function loadReports() {
+        const tbody = document.getElementById('transaction-history-body'); tbody.innerHTML = '';
+        let tIng=0, tEgr=0;
+       
+        // Get filter values
+        const typeFilter = document.getElementById('report-filter-type').value;
+        const fromDate = document.getElementById('report-filter-from').value;
+        const toDate = document.getElementById('report-filter-to').value;
+
+        const filteredTx = MOCK_TRANSACTIONS.filter(t => {
+            // Type Filter
+            if (typeFilter !== 'all' && t.type !== typeFilter) return false;
+           
+            // Date Filter (simple string comparison for mock data format YYYY-MM-DD)
+            const txDate = t.date.substring(0, 10);
+            if (fromDate && txDate < fromDate) return false;
+            if (toDate && txDate > toDate) return false;
+           
+            return true;
+        });
+
+        filteredTx.forEach(t => {
+            if(t.type==='Ingreso') tIng+=t.amount; else tEgr+=t.amount;
+            const color = t.type === 'Ingreso' ? 'text-green-600' : 'text-orange-600';
+            const badgeColor = t.type === 'Ingreso' ? 'bg-green-100 text-green-800' : 'bg-orange-100 text-orange-800';
+           
+            tbody.insertAdjacentHTML('beforeend', `<tr class="hover:bg-gray-50 border-b last:border-0"><td class="p-3">${t.date}</td><td class="p-3"><span class="px-2 py-0.5 rounded text-xs font-bold ${badgeColor}">${t.type}</span></td><td class="p-3">${t.member}</td><td class="p-3 text-gray-500">${t.concept}</td><td class="p-3 text-center text-xs text-gray-400">${t.method}</td><td class="p-3 text-right font-medium ${color}">${formatCurrency(t.amount)}</td></tr>`);
+        });
+       
+        let totalIng = 0, totalEgr = 0;
+        MOCK_TRANSACTIONS.forEach(t => { if(t.type==='Ingreso') totalIng+=t.amount; else totalEgr+=t.amount; });
+        appState.totalIngresos = totalIng; appState.totalEgresos = totalEgr; // Sincroniza con el estado global
+
+        document.getElementById('kpi-ingresos').textContent = formatCurrency(totalIng);
+        document.getElementById('kpi-egresos').textContent = formatCurrency(totalEgr);
+       
+        const saldoNeto = totalIng - totalEgr;
+        document.getElementById('kpi-neto').textContent = formatCurrency(saldoNeto);
+       
+        const liveBox = LIVE_CAJAS_STATUS.find(c => c.id === '001');
+        if (liveBox) {
+            // Actualizar el saldo del dashboard con el saldo en efectivo simulado
+            document.getElementById('dash-saldo-actual').textContent = formatCurrency(liveBox.saldo);
+            document.getElementById('kpi-apertura').textContent = formatCurrency(appState.montoApertura);
+        }
+    }
+
+    function updateDashboard() {
+        const card = document.getElementById('dash-status-card');
+        const text = document.getElementById('dash-estado-text');
+       
+        const liveBox = LIVE_CAJAS_STATUS.find(c => c.id === '001');
+        if (liveBox && liveBox.estado === 'Abierta') {
+            appState.cajaAbierta = true;
+            text.textContent = 'ABIERTA';
+            text.classList.remove('text-red-500');
+            text.classList.add('text-yoayu-green');
+           
+            card.classList.remove('border-l-red-500');
+            card.classList.add('border-l-yoayu-green');
+           
+            // Sidebar update
+            document.getElementById('status-text-sidebar').textContent = 'Caja Abierta';
+            document.getElementById('status-indicator-sidebar').classList.remove('bg-red-400');
+            document.getElementById('status-indicator-sidebar').classList.add('bg-green-400');
+        } else {
+            appState.cajaAbierta = false;
+            text.textContent = 'CERRADA';
+            text.classList.remove('text-yoayu-green');
+            text.classList.add('text-red-500');
+           
+            card.classList.remove('border-l-yoayu-green');
+            card.classList.add('border-l-red-500');
+
+            // Sidebar update
+            document.getElementById('status-text-sidebar').textContent = 'Caja Cerrada';
+            document.getElementById('status-indicator-sidebar').classList.remove('bg-green-400');
+            document.getElementById('status-indicator-sidebar').classList.add('bg-red-400');
+        }
+        loadReports();
+    }
+</script>
+</body>
+</html>
