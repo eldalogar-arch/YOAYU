@@ -1,0 +1,1906 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Yoayu - Sistema de Gestión Cooperativa</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        'yoayu-green': '#006847', /* Verde Institucional Yoayu */
+                        'yoayu-dark': '#004d35',
+                        'yoayu-light': '#e6f0ed',
+                        'apex-header': '#f2f2f2',
+                        'apex-border': '#dce1e5',
+                        'success-green': '#059669', // Verde para botones de éxito
+                    },
+                    fontFamily: { sans: ['Segoe UI', 'Inter', 'system-ui', 'sans-serif'] } /* Fuente similar a APEX */
+                }
+            }
+        }
+    </script>
+    <style>
+        body { background-color: #f0f2f5; font-family: 'Segoe UI', 'Inter', sans-serif; color: #1f2937; }
+        
+        /* Estilos tipo Oracle APEX Universal Theme */
+        .sidebar { background-color: #006847; background-image: linear-gradient(180deg, #006847 0%, #004d35 100%); }
+        .nav-item { border-radius: 4px; color: rgba(255,255,255,0.9); }
+        .nav-item:hover { background-color: rgba(255,255,255,0.1); color: white; }
+        .nav-item.active-link { background-color: rgba(255,255,255,0.2); border-left: 4px solid #FFC300; font-weight: 600; }
+        
+        .card { background: white; border: 1px solid #dce1e5; border-radius: 4px; box-shadow: 0 1px 2px rgba(0,0,0,0.05); }
+        .card-header { background-color: transparent; border-bottom: 1px solid #dce1e5; padding: 12px 16px; font-weight: 600; color: #333; font-size: 1rem; }
+        
+        /* Inputs estilo APEX */
+        input, select, textarea { border: 1px solid #dfdfdf; border-radius: 2px; transition: border-color 0.2s, box-shadow 0.2s; font-size: 0.875rem; height: 2.5rem; padding: 0.25rem 0.5rem; }
+        input:focus, select:focus, textarea:focus { border-color: #006847; outline: none; box-shadow: 0 0 0 1px rgba(0, 104, 71, 0.2); }
+        label { color: #555; font-weight: 600; font-size: 0.75rem; margin-bottom: 0.25rem; display: block; }
+        .required-asterisk { color: #dc2626; margin-left: 2px; }
+
+        .btn-apex-primary { background-color: #006847; color: white; border-radius: 2px; font-weight: 500; transition: background-color 0.2s; box-shadow: 0 1px 2px rgba(0,0,0,0.1); display: inline-flex; align-items: center; justify-content: center; height: 2.5rem; padding: 0 1rem; }
+        .btn-apex-primary:hover { background-color: #005a3e; }
+        
+        .btn-apex-success { background-color: #10b981; color: white; border-radius: 2px; font-weight: 600; transition: background-color 0.2s; box-shadow: 0 1px 2px rgba(0,0,0,0.1); height: 2.5rem; padding: 0 1.5rem; }
+        .btn-apex-success:hover { background-color: #059669; }
+
+        .tab-button { color: #666; border-bottom: 2px solid transparent; }
+        .tab-button.active-tab { color: #006847; border-bottom-color: #006847; font-weight: 700; }
+
+        .view-content:not(.active) { display: none; }
+        .hidden-section { display: none; }
+
+        /* Breadcrumbs */
+        .breadcrumb { font-size: 0.75rem; color: #0066cc; margin-bottom: 0.5rem; }
+        .breadcrumb span { color: #666; }
+
+        /* Modal Backdrop */
+        .modal-backdrop { background-color: rgba(0, 0, 0, 0.5); z-index: 50; }
+
+        /* Scroll sutil */
+        ::-webkit-scrollbar { width: 8px; height: 8px; background-color: transparent; }
+        ::-webkit-scrollbar-track { background: transparent; }
+        ::-webkit-scrollbar-thumb { background: #c1c1c1; border-radius: 10px; }
+        ::-webkit-scrollbar-thumb:hover { background: #a8a8a8; }
+        html { scrollbar-width: thin; scrollbar-color: #c1c1c1 transparent; }
+    </style>
+</head>
+<body>
+
+<div class="flex h-screen overflow-hidden">
+
+    <!-- Sidebar Estilo APEX -->
+    <div class="sidebar w-64 flex-shrink-0 flex flex-col justify-between hidden md:flex shadow-xl z-20">
+        <div class="p-4">
+            <!-- Logo Area -->
+            <div class="flex items-center justify-center mb-8 p-2 bg-white/10 rounded">
+                <img src="image_0c3875.png" alt="Yoayu Logo" class="h-12 w-auto object-contain" onerror="this.style.display='none'; this.nextElementSibling.style.display='block'">
+                <h1 class="text-2xl font-bold text-white hidden ml-2 tracking-wide" style="display:none">YOAYU</h1>
+            </div>
+
+            <nav class="space-y-1 text-sm overflow-y-auto max-h-[calc(100vh-200px)]">
+                <a href="#" class="nav-item flex items-center px-3 py-3 transition duration-150 active-link" data-view="dashboard" onclick="switchView('dashboard')">
+                    <svg class="w-5 h-5 mr-3 opacity-80" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2V6zM14 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V6zM4 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2v-2zM14 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z"></path></svg>
+                    Panel Principal
+                </a>
+                
+                <div class="pt-4 pb-1 pl-3 text-xs uppercase text-green-200/60 font-bold tracking-wider">Operaciones de Caja</div>
+                <a href="#" class="nav-item flex items-center px-3 py-3 transition duration-150" data-view="apertura" onclick="switchView('apertura')">
+                    <svg class="w-5 h-5 mr-3 opacity-80" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"></path></svg>
+                    Apertura de Caja
+                </a>
+                <a href="#" class="nav-item flex items-center px-3 py-3 transition duration-150" data-view="caja" onclick="switchView('caja')">
+                    <svg class="w-5 h-5 mr-3 opacity-80" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 9V7a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2m2 4h10a2 2 0 002-2v-6a2 2 0 00-2-2H9a2 2 0 00-2 2v6a2 2 0 002 2zm7-5a2 2 0 11-4 0 2 2 0 014 0z"></path></svg>
+                    Movimientos (Caja)
+                </a>
+                <a href="#" class="nav-item flex items-center px-3 py-3 transition duration-150" data-view="cierre" onclick="switchView('cierre')">
+                    <svg class="w-5 h-5 mr-3 opacity-80" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4"></path></svg>
+                    Arqueo y Cierre
+                </a>
+
+                <div class="pt-4 pb-1 pl-3 text-xs uppercase text-green-200/60 font-bold tracking-wider">Consultas</div>
+                <a href="#" class="nav-item flex items-center px-3 py-3 transition duration-150" data-view="obligaciones" onclick="switchView('obligaciones')">
+                    <svg class="w-5 h-5 mr-3 opacity-80" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path></svg>
+                    Consulta Obligaciones
+                </a>
+                <a href="#" class="nav-item flex items-center px-3 py-3 transition duration-150" data-view="reportes" onclick="switchView('reportes')">
+                    <svg class="w-5 h-5 mr-3 opacity-80" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 8v8m-4-5v5m-4-2v2m-2 4h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v10a2 2 0 002 2z"></path></svg>
+                    Reportes y Resumen
+                </a>
+                
+                 <!-- SECCIÓN GESTIÓN OPERATIVA (MODIFICADA) -->
+                 <div class="pt-4 pb-1 pl-3 text-xs uppercase text-indigo-300/80 font-bold tracking-wider border-t border-white/10 mt-2">Gestión Operativa</div>
+                 <a href="#" class="nav-item flex items-center px-3 py-3 transition duration-150" data-view="solicitudes" onclick="switchView('solicitudes')">
+                     <svg class="w-5 h-5 mr-3 opacity-80 text-indigo-300" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-3 7h3m-3 4h3m-6-4h.01M9 16h.01"></path></svg>
+                     <span class="text-indigo-100 font-bold">Solicitudes de Pago</span>
+                 </a>
+                 <a href="#" class="nav-item flex items-center px-3 py-3 transition duration-150" data-view="gestion-transferencias" onclick="switchView('gestion-transferencias')">
+                    <svg class="w-5 h-5 mr-3 opacity-80 text-indigo-300" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7h12m0 0l-4-4m4 4l-4 4m0 6H4m0 0l4 4m-4-4l4-4"></path></svg>
+                    <span class="text-indigo-100">Registro Transferencias</span>
+                 </a>
+
+                 <!-- SECCIÓN JEFE DE TESORERÍA -->
+                 <div class="pt-4 pb-1 pl-3 text-xs uppercase text-yellow-300/80 font-bold tracking-wider border-t border-white/10 mt-2">Jefe de Tesorería</div>
+                 <a href="#" class="nav-item flex items-center px-3 py-3 transition duration-150" data-view="tesoreria" onclick="switchView('tesoreria')">
+                     <svg class="w-5 h-5 mr-3 opacity-80 text-yellow-300" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"></path></svg>
+                     <span class="text-yellow-100 font-bold">Monitor de Cajas</span>
+                 </a>
+
+                <div class="pt-4 pb-1 pl-3 text-xs uppercase text-green-200/60 font-bold tracking-wider">Mantenimientos</div>
+                <a href="#" class="nav-item flex items-center px-3 py-3 transition duration-150" data-view="mant-cajas" onclick="switchView('mant-cajas')">
+                    <svg class="w-5 h-5 mr-3 opacity-80" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.572 1.066c-1.543.94-3.31-.826-2.37-2.37.996.608 2.296.07 2.572-1.065z"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path></svg>
+                    Cajas
+                </a>
+                <a href="#" class="nav-item flex items-center px-3 py-3 transition duration-150" data-view="assign-cajas" onclick="switchView('assign-cajas')">
+                    <svg class="w-5 h-5 mr-3 opacity-80" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M18 9v3m0 0v3m0-3h3m-3 0h-3m-2-5a4 4 0 11-8 0 4 4 0 018 0zM3 20a6 6 0 0112 0v1H3v-1z"></path></svg>
+                    Asignación de Cajas
+                </a>
+            </nav>
+        </div>
+        <div class="p-4 bg-yoayu-dark/30 border-t border-yoayu-dark/50">
+            <div class="flex items-center">
+                <div class="w-2 h-2 rounded-full bg-red-400 mr-2 shadow-[0_0_5px_rgba(248,113,113,0.8)]" id="status-indicator-sidebar"></div>
+                <span id="status-text-sidebar" class="text-xs text-red-100 font-medium">Caja Cerrada</span>
+            </div>
+            <div class="text-xs text-green-200/70 mt-1">Caja: 01 | Cajero: JP</div>
+        </div>
+    </div>
+
+    <!-- Contenido Principal -->
+    <div class="flex-1 flex flex-col h-screen overflow-hidden bg-[#f2f2f2]">
+        <!-- Header Universal APEX -->
+        <header class="bg-white shadow-sm h-14 flex items-center justify-between px-6 z-10 border-b border-gray-200">
+            <h2 id="page-title" class="text-lg font-bold text-gray-700 tracking-tight">Panel Principal</h2>
+            <div class="flex items-center space-x-4">
+                <div class="text-right hidden md:block leading-tight">
+                    <p class="text-xs font-bold text-gray-600 uppercase" id="header-date">--</p>
+                    <p class="text-[10px] text-gray-400" id="header-status">Turno Abierto</p>
+                </div>
+                <div class="w-8 h-8 bg-yoayu-green text-white rounded-full flex items-center justify-center font-bold text-xs shadow-sm">JP</div>
+            </div>
+        </header>
+
+        <main class="flex-1 overflow-y-auto p-4 md:p-6 space-y-6">
+            
+            <!-- DASHBOARD -->
+            <section id="dashboard-view" class="view-content active space-y-6">
+                <!-- Tarjeta de Estado de Caja CON BIENVENIDA -->
+                <div class="card p-6 border-l-4 border-l-red-500 flex justify-between items-center transition-colors duration-300" id="dash-status-card">
+                    <div>
+                        <h4 class="text-lg text-gray-600 font-medium mb-1">Bienvenido, <span class="font-bold text-gray-800">Juan Perez</span></h4>
+                        <h3 class="text-base font-bold text-gray-700 flex items-center mt-1">
+                            Estado de Caja: 
+                            <span id="dash-estado-text" class="ml-2 text-red-500 font-extrabold tracking-wide">CERRADA</span>
+                        </h3>
+                        <p class="text-sm text-gray-500 mt-1">Terminal: 01 | Sucursal: Casa Matriz</p>
+                    </div>
+                    <div class="text-right">
+                        <p class="text-xs font-semibold text-gray-500 uppercase">Saldo Actual Estimado</p>
+                        <p class="text-2xl font-bold text-yoayu-green" id="dash-saldo-actual">Gs. 0</p>
+                    </div>
+                </div>
+
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+                    <div onclick="switchView('apertura')" class="card p-6 cursor-pointer hover:shadow-md transition-shadow border-t-4 border-t-blue-500 flex flex-col items-center text-center justify-center h-40">
+                        <div class="bg-blue-50 p-3 rounded-full mb-3 text-blue-600">
+                            <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"></path></svg>
+                        </div>
+                        <h4 class="font-bold text-sm text-gray-700">Apertura de Caja</h4>
+                    </div>
+                    <div onclick="switchView('caja')" class="card p-6 cursor-pointer hover:shadow-md transition-shadow border-t-4 border-t-yoayu-green flex flex-col items-center text-center justify-center h-40">
+                        <div class="bg-green-50 p-3 rounded-full mb-3 text-yoayu-green">
+                            <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+                        </div>
+                        <h4 class="font-bold text-sm text-gray-700">Movimientos de Caja</h4>
+                    </div>
+                    <div onclick="switchView('cierre')" class="card p-6 cursor-pointer hover:shadow-md transition-shadow border-t-4 border-t-orange-500 flex flex-col items-center text-center justify-center h-40">
+                        <div class="bg-orange-50 p-3 rounded-full mb-3 text-orange-600">
+                            <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+                        </div>
+                        <h4 class="font-bold text-sm text-gray-700">Arqueo y Cierre</h4>
+                    </div>
+                </div>
+            </section>
+
+             <!-- MANTENIMIENTO CAJAS -->
+             <section id="mant-cajas-view" class="view-content hidden-section">
+                <!-- Contenido de Mantenimiento Cajas (Sin cambios) -->
+                <div class="mb-4 breadcrumb flex items-center text-gray-500 text-xs uppercase tracking-wide">
+                    <span>Inicio</span><svg class="w-3 h-3 mx-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path></svg>
+                    <span>Tesoreria</span><svg class="w-3 h-3 mx-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path></svg>
+                    <span>Mantenimientos</span><svg class="w-3 h-3 mx-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path></svg>
+                    <span class="text-yoayu-green font-bold">Cajas</span>
+                </div>
+                <div class="card overflow-hidden shadow-lg border-0 rounded-lg">
+                    <div class="bg-white p-6 border-b flex flex-col md:flex-row justify-between items-center gap-4">
+                        <h3 class="text-xl font-bold text-gray-700 flex items-center"><span class="w-2 h-8 bg-yoayu-green rounded-full mr-3"></span>Administración de Cajas</h3>
+                        <button onclick="showCajasForm()" class="btn-apex-success bg-[#00aa00] hover:bg-[#008800] shadow-md hover:shadow-lg transform transition hover:-translate-y-0.5 px-6 py-2.5 rounded-full flex items-center"><svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path></svg>Nueva Caja</button>
+                    </div>
+                    <div class="overflow-x-auto">
+                        <table class="w-full text-left border-collapse">
+                            <thead><tr class="bg-white border-b border-gray-100"><th class="p-4 text-xs font-bold text-gray-400 uppercase tracking-wider">Id</th><th class="p-4 text-xs font-bold text-gray-400 uppercase tracking-wider">Código</th><th class="p-4 text-xs font-bold text-gray-400 uppercase tracking-wider">Descripción</th><th class="p-4 text-xs font-bold text-gray-400 uppercase tracking-wider">Tipo</th><th class="p-4 text-xs font-bold text-gray-400 uppercase tracking-wider">Moneda</th><th class="p-4 text-xs font-bold text-gray-400 uppercase tracking-wider text-right">Min. Apertura</th><th class="p-4 text-xs font-bold text-gray-400 uppercase tracking-wider">Sucursal</th><th class="p-4 text-xs font-bold text-gray-400 uppercase tracking-wider text-center">Estado</th><th class="p-4 text-xs font-bold text-gray-400 uppercase tracking-wider text-center">Acciones</th></tr></thead>
+                            <tbody id="cajas-table-body" class="divide-y divide-gray-50"></tbody>
+                        </table>
+                    </div>
+                </div>
+             </section>
+             <section id="mant-cajas-form-view" class="view-content hidden-section">
+                <!-- Formulario Cajas -->
+                <div class="mb-4 breadcrumb flex items-center text-gray-500 text-xs uppercase tracking-wide"><span>Inicio</span>...<span class="text-yoayu-green font-bold" id="form-caja-title-crumb">Editar</span></div>
+                <div class="card overflow-hidden shadow-lg border-0 rounded-lg">
+                    <div class="bg-yoayu-green p-4 flex justify-between items-center"><h3 class="text-lg font-bold text-white flex items-center" id="form-caja-header-title">GESTIÓN DE CAJA</h3></div>
+                    <div class="p-8 bg-white">
+                        <input type="hidden" id="form-caja-id">
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-x-12 gap-y-8 max-w-6xl mx-auto">
+                            <div class="space-y-6">
+                                <div><label>Código <span class="required-asterisk">*</span></label><input type="text" id="form-caja-codigo" class="w-full pl-2 h-10 border-gray-300 rounded font-mono font-medium" placeholder="001"></div>
+                                <div><label>Tipo de Caja <span class="required-asterisk">*</span></label><select id="form-caja-tipo" class="w-full h-10 border-gray-300 rounded"><option>Caja Normal</option><option>Caja Chica</option><option>Recaudadora</option></select></div>
+                                <div><label>Importe Mín. Apertura <span class="required-asterisk">*</span></label><input type="text" id="form-caja-min" class="w-full h-10 text-right font-bold text-gray-700 rounded" placeholder="0"></div>
+                            </div>
+                            <div class="space-y-6">
+                                <div><label>Descripción <span class="required-asterisk">*</span></label><input type="text" id="form-caja-desc" class="w-full h-10 border-gray-300 rounded" placeholder="Ej: CAJA CENTRAL 1"></div>
+                                <div><label>Moneda <span class="required-asterisk">*</span></label><select id="form-caja-moneda" class="w-full h-10 border-gray-300 rounded"><option>PYG - Guarani</option><option>USD - Dolar</option></select></div>
+                                <div><label>Estado</label><div class="flex gap-4 mt-2"><label class="inline-flex items-center"><input type="radio" name="caja_estado" value="Activo" checked class="form-radio text-yoayu-green"><span class="ml-2 text-sm">Activo</span></label><label class="inline-flex items-center"><input type="radio" name="caja_estado" value="Inactivo" class="form-radio"><span class="ml-2 text-sm">Inactivo</span></label></div></div>
+                            </div>
+                        </div>
+                        <div class="mt-10 flex justify-end gap-3"><button onclick="cancelCaja()" class="px-6 py-2.5 rounded text-gray-600 bg-gray-100 hover:bg-gray-200">Cancelar</button><button onclick="saveCaja()" class="px-8 py-2.5 rounded bg-yoayu-green text-white font-bold hover:bg-yoayu-dark">Guardar Cambios</button></div>
+                    </div>
+                </div>
+             </section>
+
+             <!-- ASIGNACIÓN DE CAJAS (RESTAURADA) -->
+             <section id="assign-cajas-view" class="view-content hidden-section">
+                <div class="mb-4 breadcrumb flex items-center text-gray-500 text-xs uppercase tracking-wide"><span>Inicio</span>...<span class="text-yoayu-green font-bold">Asignación de Cajas</span></div>
+                <div class="card overflow-hidden shadow-lg border-0 rounded-lg">
+                    <div class="bg-white p-6 border-b flex flex-col md:flex-row justify-between items-center gap-4">
+                        <h3 class="text-xl font-bold text-gray-700 flex items-center"><span class="w-2 h-8 bg-yoayu-green rounded-full mr-3"></span>Asignación de Cajas</h3>
+                        <button onclick="showAssignForm()" class="btn-apex-success bg-[#00aa00] hover:bg-[#008800] shadow-md hover:shadow-lg transform transition hover:-translate-y-0.5 px-6 py-2.5 rounded-full flex items-center"><svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path></svg>Nueva Asignación</button>
+                    </div>
+                    <div class="overflow-x-auto"><table class="w-full text-left border-collapse"><thead><tr class="bg-white border-b border-gray-100"><th class="p-4 text-xs font-bold text-gray-400 uppercase tracking-wider">Id</th><th class="p-4 text-xs font-bold text-gray-400 uppercase tracking-wider">Sucursal</th><th class="p-4 text-xs font-bold text-gray-400 uppercase tracking-wider">Agencia</th><th class="p-4 text-xs font-bold text-gray-400 uppercase tracking-wider">Caja</th><th class="p-4 text-xs font-bold text-gray-400 uppercase tracking-wider">Cajero</th><th class="p-4 text-xs font-bold text-gray-400 uppercase tracking-wider text-center">Estado</th><th class="p-4 text-xs font-bold text-gray-400 uppercase tracking-wider text-center">Acciones</th></tr></thead><tbody id="assign-table-body" class="divide-y divide-gray-50"></tbody></table></div>
+                </div>
+             </section>
+             <section id="assign-cajas-form-view" class="view-content hidden-section">
+                 <div class="mb-4 breadcrumb flex items-center text-gray-500 text-xs uppercase tracking-wide"><span>Inicio</span>...<span class="text-yoayu-green font-bold" id="form-assign-title-crumb">Editar</span></div>
+                 <div class="card overflow-hidden shadow-lg border-0 rounded-lg">
+                    <div class="bg-yoayu-green p-4 flex justify-between items-center"><h3 class="text-lg font-bold text-white flex items-center" id="form-assign-header-title">ASIGNAR CAJA</h3></div>
+                    <div class="p-8 bg-white">
+                        <input type="hidden" id="form-assign-id">
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-x-12 gap-y-8 max-w-6xl mx-auto">
+                            <div class="space-y-6">
+                                <div><label>Sucursal</label><input type="text" id="assign-sucursal" value="Casa Matriz" readonly class="w-full h-10 bg-gray-50 border-gray-300 rounded text-sm text-gray-600 focus:ring-0"></div>
+                                <div><label>Agencia</label><select id="assign-agencia" class="w-full h-10 border-gray-300 rounded text-sm"><option>Agencia Casa Matriz</option></select></div>
+                                <div><label>Caja <span class="required-asterisk">*</span></label><select id="assign-caja-select" onchange="updateAssignDetails()" class="w-full h-10 border-gray-300 rounded text-sm"><option value="">-- Seleccione Caja --</option></select></div>
+                                <div><label>Cajero <span class="required-asterisk">*</span></label><select id="assign-cajero" class="w-full h-10 border-gray-300 rounded text-sm"><option value="">-- Seleccione Cajero --</option><option>Juan Perez</option><option>Maria Lopez</option></select></div>
+                            </div>
+                            <div class="space-y-6">
+                                <div><label>Tipo de Caja</label><input type="text" id="assign-tipo" readonly class="w-full h-10 bg-gray-100 border-gray-300 rounded text-sm text-gray-600"></div>
+                                <div><label>Importe de Apertura <span class="required-asterisk">*</span></label><input type="text" id="assign-importe" class="w-full h-10 text-right font-bold text-gray-700 rounded" placeholder="0"></div>
+                                <div><label>Estado</label><div class="flex gap-4 mt-2"><label class="inline-flex items-center"><input type="radio" name="assign_estado" value="Activo" checked class="form-radio text-yoayu-green"><span class="ml-2 text-sm">Activo</span></label></div></div>
+                            </div>
+                        </div>
+                        <div class="mt-10 flex justify-end gap-3"><button onclick="cancelAssign()" class="px-6 py-2.5 rounded text-gray-600 bg-gray-100 hover:bg-gray-200">Cancelar</button><button onclick="saveAssignment()" class="px-8 py-2.5 rounded bg-yoayu-green text-white font-bold hover:bg-yoayu-dark">Guardar Asignación</button></div>
+                    </div>
+                 </div>
+             </section>
+
+             <!-- VISTA: SOLICITUDES DE PAGO (OPERADOR) ACTUALIZADA -->
+             <section id="solicitudes-view" class="view-content hidden-section">
+                 <div class="mb-4 breadcrumb flex items-center text-gray-500 text-xs uppercase tracking-wide">
+                     <span>Inicio</span>
+                     <svg class="w-3 h-3 mx-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path></svg>
+                     <span class="text-indigo-600 font-bold">Solicitudes de Pago</span>
+                 </div>
+
+                 <div class="grid grid-cols-1 lg:grid-cols-12 gap-6 mb-6">
+                     <!-- Columna Izq: Transferencias Disponibles -->
+                     <div class="lg:col-span-5 flex flex-col">
+                        <div class="card bg-white h-full flex flex-col">
+                            <div class="card-header bg-indigo-50 border-b border-indigo-100 flex justify-between items-center">
+                                <span class="text-indigo-800">1. Transferencias Recibidas</span>
+                                <span class="bg-indigo-200 text-indigo-800 text-xs px-2 py-1 rounded-full font-bold">Disponibles</span>
+                            </div>
+                            <div class="p-4 flex-1 overflow-y-auto" style="max-height: 400px;">
+                                <div class="space-y-3" id="transfers-list">
+                                    <!-- Populated by JS -->
+                                </div>
+                            </div>
+                        </div>
+                     </div>
+
+                     <!-- Columna Der: Generar Solicitud -->
+                     <div class="lg:col-span-7">
+                         <div class="card bg-white h-full">
+                             <div class="card-header border-b flex justify-between items-center">
+                                 <span>2. Detalle de la Solicitud</span>
+                                 <div id="selected-transfer-badge" class="hidden bg-gray-100 text-gray-600 text-xs px-3 py-1 rounded border">Seleccione una transferencia</div>
+                             </div>
+                             <div class="p-6 space-y-6">
+                                 <!-- Buscador Socio Operador -->
+                                 <div>
+                                     <label class="text-xs uppercase font-bold text-gray-500 mb-1">Socio / Titular</label>
+                                     <div class="flex gap-2">
+                                         <input type="text" id="op-member-search" class="w-full" placeholder="Buscar por N° o C.I (Ej: 1001)">
+                                         <button onclick="opSearchMember()" class="bg-indigo-600 text-white px-4 rounded hover:bg-indigo-700 flex items-center"><svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path></svg></button>
+                                     </div>
+                                     <div id="op-member-result" class="hidden mt-2 p-2 bg-indigo-50 border border-indigo-100 rounded text-sm text-indigo-900 font-medium"></div>
+                                 </div>
+
+                                 <!-- Listado Conceptos Operador (ACTUALIZADO) -->
+                                 <div id="op-concepts-container" class="hidden">
+                                     <label class="text-xs uppercase font-bold text-gray-500 mb-2">Conceptos / Obligaciones</label>
+                                     
+                                     <!-- Pestañas Filtro -->
+                                     <div class="flex border-b mb-3 overflow-x-auto">
+                                         <button class="px-3 py-2 text-xs font-bold text-indigo-600 border-b-2 border-indigo-600 transition-colors" data-op-tab="creditos" onclick="setOpActiveTab(this)">Créditos</button>
+                                         <button class="px-3 py-2 text-xs font-bold text-gray-500 hover:text-gray-700 transition-colors" data-op-tab="aportes" onclick="setOpActiveTab(this)">Aportes/Fondos</button>
+                                         <button class="px-3 py-2 text-xs font-bold text-gray-500 hover:text-gray-700 transition-colors" data-op-tab="depositos" onclick="setOpActiveTab(this)">Depósitos</button>
+                                     </div>
+
+                                     <!-- Toggle Adelantos (Solo visible en Créditos) -->
+                                     <div id="op-toggle-adelantos-container" class="mb-2 flex justify-end">
+                                        <label class="inline-flex items-center cursor-pointer">
+                                            <input type="checkbox" id="op-toggle-adelantos" class="sr-only peer" onchange="toggleOpAdelantos()">
+                                            <div class="relative w-9 h-5 bg-gray-200 peer-focus:outline-none peer-focus:ring-2 peer-focus:ring-indigo-300 rounded-full peer peer-checked:after:translate-x-full rtl:peer-checked:after:-translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:start-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-indigo-600"></div>
+                                            <span class="ms-3 text-xs font-medium text-gray-600">Ver Cuotas Futuras</span>
+                                        </label>
+                                     </div>
+
+                                     <!-- Formulario Depósitos (Oculto por defecto) -->
+                                     <div id="op-deposito-form" class="hidden bg-indigo-50 p-3 rounded mb-3 border border-indigo-100">
+                                          <h4 class="text-xs font-bold text-indigo-800 mb-2">Agregar Depósito</h4>
+                                          <div class="grid grid-cols-3 gap-2 mb-1">
+                                              <div><label class="text-[10px]">Cuenta Destino</label><select id="op-dep-cuenta" class="w-full h-8 text-xs"><option>Ahorro a la Vista</option><option>Plazo Fijo</option></select></div>
+                                              <div><label class="text-[10px]">Monto</label><input type="text" id="op-dep-monto" class="w-full h-8 text-right font-bold text-xs" placeholder="0"></div>
+                                              <div class="flex items-end"><button onclick="addOpDepositoLine()" class="bg-indigo-600 text-white px-3 py-1.5 rounded text-xs font-bold w-full hover:bg-indigo-700">Agregar</button></div>
+                                          </div>
+                                     </div>
+
+                                     <div class="border rounded max-h-56 overflow-y-auto mb-4">
+                                         <table class="w-full text-sm">
+                                             <thead class="bg-gray-50 text-xs text-gray-500 uppercase sticky top-0">
+                                                 <tr><th class="p-2 text-left">Concepto</th><th class="p-2 text-right">Monto</th><th class="p-2 text-center">Acción</th></tr>
+                                             </thead>
+                                             <tbody id="op-obligations-body" class="divide-y"></tbody>
+                                         </table>
+                                     </div>
+
+                                     <!-- Resumen Totales -->
+                                     <div class="bg-gray-50 p-4 rounded border border-gray-200">
+                                         <div class="flex justify-between text-sm mb-1">
+                                             <span class="text-gray-500">Monto Transferencia:</span>
+                                             <span class="font-bold text-gray-800" id="op-transfer-amount">0 Gs</span>
+                                         </div>
+                                         <div class="flex justify-between text-sm mb-3">
+                                             <span class="text-gray-500">Total a Pagar:</span>
+                                             <span class="font-bold text-indigo-600" id="op-total-pay">0 Gs</span>
+                                         </div>
+                                         <div class="flex justify-between text-sm pt-2 border-t">
+                                             <span class="font-bold text-gray-600">Remanente / Saldo:</span>
+                                             <span class="font-bold text-green-600" id="op-balance">0 Gs</span>
+                                         </div>
+                                     </div>
+
+                                     <button onclick="createRequest()" id="btn-create-req" disabled class="w-full mt-4 bg-indigo-600 hover:bg-indigo-700 disabled:opacity-50 disabled:cursor-not-allowed text-white font-bold py-3 rounded shadow-md transition-all">
+                                         GENERAR SOLICITUD DE PAGO
+                                     </button>
+                                 </div>
+                                 
+                                 <div id="op-empty-state" class="text-center py-10 text-gray-400">
+                                     <p>Busque un socio para asignar la transferencia seleccionada.</p>
+                                 </div>
+                             </div>
+                         </div>
+                     </div>
+                 </div>
+
+                 <!-- NUEVA SECCIÓN: HISTORIAL DE SOLICITUDES -->
+                 <div class="card overflow-hidden">
+                    <div class="card-header bg-gray-50 flex justify-between items-center">
+                        <span class="text-gray-700">3. Historial de Solicitudes (Sesión Actual)</span>
+                        <button onclick="renderRequestsSummary()" class="text-xs text-indigo-600 hover:text-indigo-800 flex items-center font-bold">
+                            <svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"></path></svg>
+                            Actualizar
+                        </button>
+                    </div>
+                    <div class="overflow-x-auto">
+                        <table class="w-full text-sm text-left">
+                            <thead class="bg-white border-b text-xs text-gray-500 uppercase">
+                                <tr>
+                                    <th class="p-3">ID Solicitud</th>
+                                    <th class="p-3">Socio</th>
+                                    <th class="p-3">Ref. Transferencia</th>
+                                    <th class="p-3 text-right">Monto Total</th>
+                                    <th class="p-3 text-center">Estado</th>
+                                    <th class="p-3 text-center">Acciones</th>
+                                </tr>
+                            </thead>
+                            <tbody id="op-requests-history-body" class="divide-y bg-white">
+                                <!-- Populated by JS -->
+                                <tr class="text-center text-gray-400"><td colspan="6" class="p-4">No se han generado solicitudes aún.</td></tr>
+                            </tbody>
+                        </table>
+                    </div>
+                 </div>
+             </section>
+
+             <!-- VISTA: TESORERIA -->
+            <section id="tesoreria-view" class="view-content hidden-section">
+                <!-- Monitor de Cajas existente -->
+                <div class="card p-6">
+                    <div class="flex justify-between items-center mb-4">
+                        <h3 class="text-xl font-bold">Monitor de Tesorería</h3>
+                        <button onclick="renderTesoreriaTable()" class="text-xs bg-gray-600 hover:bg-gray-500 text-white px-3 py-1 rounded">Actualizar</button>
+                    </div>
+                    <table class="w-full text-left border-collapse">
+                        <thead><tr class="bg-gray-50 border-b"><th class="p-4 text-xs font-bold text-gray-500">Caja</th><th class="p-4 text-xs font-bold text-gray-500">Cajero</th><th class="p-4 text-xs font-bold text-gray-500">Estado</th><th class="p-4 text-xs font-bold text-gray-500 text-right">Saldo</th><th class="p-4 text-xs font-bold text-gray-500 text-center">Acciones</th></tr></thead>
+                        <tbody id="tesoreria-table-body" class="divide-y divide-gray-100 bg-white"></tbody>
+                    </table>
+                </div>
+            </section>
+            
+            <!-- VISTA: GESTIÓN DE TRANSFERENCIAS (ACTUALIZADA: COLOR ÍNDIGO) -->
+            <section id="gestion-transferencias-view" class="view-content hidden-section">
+                <div class="mb-4 breadcrumb flex items-center text-gray-500 text-xs uppercase tracking-wide">
+                     <span>Inicio</span><svg class="w-3 h-3 mx-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path></svg>
+                     <span>Gestión Operativa</span><svg class="w-3 h-3 mx-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path></svg>
+                     <span class="text-indigo-600 font-bold">Registro de Transferencias</span>
+                 </div>
+                 
+                 <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                     <!-- Formulario de Carga (Color actualizado a índigo) -->
+                     <div class="lg:col-span-1">
+                         <div class="card overflow-hidden shadow-lg border-0 rounded-lg h-full">
+                            <div class="bg-indigo-600 p-4"><h3 class="text-lg font-bold text-white">Registrar Transferencia</h3></div>
+                            <div class="p-4 space-y-4 overflow-y-auto max-h-[calc(100vh-200px)]">
+                                
+                                <!-- Origen -->
+                                <div class="bg-indigo-50 p-3 rounded border border-indigo-100">
+                                    <h4 class="text-xs font-bold text-indigo-800 uppercase mb-2 border-b border-indigo-200 pb-1">1. Datos de Origen</h4>
+                                    <div class="space-y-2">
+                                        <div><label class="text-[11px]">Entidad Financiera (Origen)</label><select id="reg-transf-banco-org" class="w-full h-8 text-xs"><option>Banco Itaú</option><option>Banco Atlas</option><option>Visión Banco</option><option>Banco Familiar</option><option>Banco GNB</option><option>Interfisa Banco</option><option>Otro</option></select></div>
+                                        <div><label class="text-[11px]">N° Cuenta Origen</label><input type="text" id="reg-transf-cta-org" class="w-full h-8 text-xs" placeholder="000-000-000"></div>
+                                        <div><label class="text-[11px]">Nombre Titular</label><input type="text" id="reg-transf-titular-org" class="w-full h-8 text-xs" placeholder="Quien envía..."></div>
+                                        <div><label class="text-[11px]">Documento Titular (CI/RUC)</label><input type="text" id="reg-transf-doc-org" class="w-full h-8 text-xs" placeholder="1234567-8"></div>
+                                    </div>
+                                </div>
+
+                                <!-- Destino -->
+                                <div class="bg-gray-50 p-3 rounded border border-gray-200">
+                                    <h4 class="text-xs font-bold text-gray-700 uppercase mb-2 border-b border-gray-200 pb-1">2. Datos de Destino</h4>
+                                    <div class="space-y-2">
+                                        <div><label class="text-[11px]">Entidad Financiera (Destino)</label><select id="reg-transf-banco-dst" class="w-full h-8 text-xs" onchange="autoFillDestino()"><option value="">-- Seleccione --</option><option value="itau">Banco Itaú</option><option value="continental">Banco Continental</option><option value="vision">Visión Banco</option></select></div>
+                                        <div><label class="text-[11px]">N° Cuenta Destino</label><input type="text" id="reg-transf-cta-dst" class="w-full h-8 text-xs" placeholder="0000000"></div>
+                                        <div><label class="text-[11px]">Titular Cta. Destino</label><input type="text" id="reg-transf-titular-dst" class="w-full h-8 text-xs bg-gray-100" value="Cooperativa Yoayu Ltda" readonly></div>
+                                    </div>
+                                </div>
+
+                                <!-- Detalles -->
+                                <div class="space-y-2 pt-2">
+                                    <div><label class="text-[11px]">Fecha Recepción</label><input type="date" id="reg-transf-fecha" class="w-full h-8 text-xs"></div>
+                                    <div><label class="text-[11px]">Referencia / Boleta</label><input type="text" id="reg-transf-ref" class="w-full h-8 text-xs font-mono" placeholder="12345678"></div>
+                                    <div><label class="text-[11px]">Monto Recibido</label><input type="text" id="reg-transf-monto" class="w-full h-8 text-right font-bold text-indigo-700" placeholder="0"></div>
+                                    <div><label class="text-[11px]">Comprobante</label><input type="file" id="reg-transf-img" accept="image/*" class="w-full text-[10px]"></div>
+                                </div>
+
+                                <button onclick="registerTransfer()" class="w-full bg-indigo-700 hover:bg-indigo-800 text-white font-bold py-2 rounded shadow text-sm">REGISTRAR OPERACIÓN</button>
+                            </div>
+                         </div>
+                     </div>
+                     
+                     <!-- Listado -->
+                     <div class="lg:col-span-2">
+                         <div class="card h-full">
+                             <div class="card-header border-b">Transferencias Registradas (Disponibles)</div>
+                             <div class="p-0 overflow-hidden">
+                                 <table class="w-full text-sm text-left">
+                                     <thead class="bg-gray-50 text-xs text-gray-500 uppercase">
+                                         <tr><th class="p-3">Origen -> Destino</th><th class="p-3">Fecha</th><th class="p-3">Referencia</th><th class="p-3 text-right">Monto Original</th><th class="p-3 text-right">Saldo Disp.</th></tr>
+                                     </thead>
+                                     <tbody id="admin-transfers-list-body" class="divide-y"></tbody>
+                                 </table>
+                             </div>
+                         </div>
+                     </div>
+                 </div>
+            </section>
+
+            <!-- CONSULTAS: OBLIGACIONES -->
+            <section id="obligaciones-view" class="view-content hidden-section">
+                <div class="card mb-6"><div class="card-header bg-white border-b-0 pb-0">Criterios de Búsqueda</div><div class="p-4"><div class="grid grid-cols-1 md:grid-cols-12 gap-4 items-end"><div class="md:col-span-3"><label>N° Socio / Documento</label><input type="text" id="filter-oblig-socio" class="w-full" placeholder="Ingrese dato..."></div><div class="md:col-span-3"><label>Tipo Obligación</label><select id="filter-oblig-tipo" class="w-full"><option value="">Todas</option><option value="Crédito">Crédito</option><option value="Tarjeta">Tarjeta</option><option value="Aporte">Aporte</option></select></div><div class="md:col-span-3"><label>Estado</label><select id="filter-oblig-estado" class="w-full"><option value="">Todos</option><option value="Pendiente">Pendiente</option><option value="Vencido">Vencido</option><option value="Pagado">Pagado</option></select></div><div class="md:col-span-3 flex gap-2"><button onclick="filterObligations()" class="btn-apex-primary flex-1">Buscar</button></div></div></div></div>
+                <div class="card overflow-hidden"><table class="w-full text-sm divide-y"><thead class="bg-gray-100 text-gray-600"><tr><th class="p-3 text-left">Socio</th><th class="p-3 text-left">Concepto</th><th class="p-3 text-left">Vencimiento</th><th class="p-3 text-right">Monto</th><th class="p-3 text-center">Estado</th></tr></thead><tbody id="query-results-body" class="bg-white divide-y"></tbody></table></div>
+            </section>
+
+             <!-- CONSULTAS: REPORTES -->
+             <section id="reportes-view" class="view-content hidden-section">
+                <div class="grid grid-cols-1 md:grid-cols-4 gap-6 mb-6"><div class="card p-4 border-l-4 border-blue-500"><p class="text-xs text-gray-500 uppercase">Apertura</p><h3 class="text-xl font-bold text-blue-700" id="kpi-apertura">Gs. 0</h3></div><div class="card p-4 border-l-4 border-green-500"><p class="text-xs text-gray-500 uppercase">Ingresos</p><h3 class="text-xl font-bold text-green-700" id="kpi-ingresos">Gs. 0</h3></div><div class="card p-4 border-l-4 border-orange-500"><p class="text-xs text-gray-500 uppercase">Egresos</p><h3 class="text-xl font-bold text-orange-700" id="kpi-egresos">Gs. 0</h3></div><div class="card p-4 border-l-4 border-gray-700 bg-gray-50"><p class="text-xs text-gray-500 uppercase">Saldo Neto</p><h3 class="text-xl font-bold text-gray-800" id="kpi-neto">Gs. 0</h3></div></div>
+                <div class="card mb-6"><div class="p-4"><div class="grid grid-cols-1 md:grid-cols-12 gap-4 items-end"><div class="md:col-span-4"><label>Tipo</label><select id="report-filter-type" onchange="loadReports()" class="w-full"><option value="all">Todas</option><option value="Ingreso">Ingresos</option><option value="Egreso">Egresos</option></select></div><div class="md:col-span-8 text-right"><button onclick="loadReports()" class="btn-apex-primary bg-yoayu-green">Actualizar</button></div></div></div></div>
+                <div class="card"><div class="card-header border-b">Historial de Transacciones</div><div class="overflow-x-auto"><table class="w-full text-sm divide-y"><thead class="bg-gray-50 text-xs text-gray-500 uppercase"><tr><th class="p-3 text-left">Fecha</th><th class="p-3 text-left">Tipo</th><th class="p-3 text-left">Socio/Benef.</th><th class="p-3 text-left">Concepto</th><th class="p-3 text-center">Medio</th><th class="p-3 text-right">Monto</th></tr></thead><tbody id="transaction-history-body" class="divide-y bg-white"></tbody></table></div></div>
+             </section>
+
+            <!-- APERTURA -->
+            <section id="apertura-view" class="view-content hidden-section">
+                <div class="card overflow-hidden border border-gray-300 shadow-md">
+                    <div class="bg-yoayu-green p-3"><h3 class="text-white font-bold text-lg">APERTURA DE CAJA</h3></div>
+                    <div class="p-8 bg-white">
+                        <div class="grid grid-cols-1 gap-4 items-center mb-4">
+                            <label>Fecha Apertura</label>
+                            <input type="datetime-local" id="apertura-fecha-input" class="w-full h-10 border-gray-300 rounded text-sm px-2">
+                        </div>
+                         <div class="grid grid-cols-1 gap-4 items-center mb-4">
+                            <label>Importe Inicial</label>
+                            <input type="text" id="monto-apertura-input" value="5000000" class="w-full h-10 border-gray-300 rounded text-sm px-2 text-right font-bold">
+                        </div>
+                        <div class="flex justify-end gap-4">
+                            <button onclick="realizarApertura()" class="bg-yoayu-green text-white px-6 py-2 rounded font-bold">ABRIR CAJA</button>
+                        </div>
+                    </div>
+                </div>
+                <div id="apertura-info" class="hidden text-center py-10 card mt-4">
+                    <h4 class="text-2xl font-bold text-gray-800 mb-2">Caja Abierta</h4>
+                    <button onclick="switchView('dashboard')" class="btn-apex-primary px-8 py-3">Ir al Panel</button>
+                </div>
+            </section>
+
+             <!-- CIERRE RESTAURADO CON PESTAÑAS -->
+             <section id="cierre-view" class="view-content hidden-section">
+                 <!-- Header de la Sección -->
+                 <div class="flex flex-col md:flex-row justify-between items-center mb-6">
+                     <h3 class="text-xl font-bold text-gray-700">Arqueo y Cierre de Caja</h3>
+                     <div class="flex space-x-1 bg-gray-200 p-1 rounded">
+                         <button onclick="setCierreTab('arqueo')" data-cierre-tab="arqueo" class="px-4 py-2 text-sm font-bold rounded shadow bg-white text-gray-800 transition-all">Arqueo de Valores</button>
+                         <button onclick="setCierreTab('egresos')" data-cierre-tab="egresos" class="px-4 py-2 text-sm font-bold rounded text-gray-600 hover:bg-gray-100 transition-all">Detalle Egresos</button>
+                         <button onclick="setCierreTab('resumen')" data-cierre-tab="resumen" class="px-4 py-2 text-sm font-bold rounded text-gray-600 hover:bg-gray-100 transition-all">Registrar Sobr/Falt</button>
+                     </div>
+                 </div>
+
+                 <!-- TAB 1: ARQUEO DE VALORES -->
+                 <div id="cierre-tab-arqueo" class="cierre-tab-content">
+                    <div class="card overflow-hidden">
+                        <div class="card-header bg-gray-50 border-b">Billetaje (Guaraníes)</div>
+                        <div class="p-0">
+                            <table class="w-full text-sm">
+                                <thead class="bg-gray-100 text-xs text-gray-500 uppercase">
+                                    <tr><th class="p-3 text-left">Denominación</th><th class="p-3 text-right">Cantidad</th><th class="p-3 text-right">Subtotal</th></tr>
+                                </thead>
+                                <tbody class="divide-y">
+                                    <tr><td class="p-3 font-bold">100.000</td><td class="p-2"><input type="number" class="w-20 text-right border rounded h-8 billetaje-input" data-val="100000" oninput="calculateBilletaje()"></td><td class="p-3 text-right font-mono subtotal-cell">0</td></tr>
+                                    <tr><td class="p-3 font-bold">50.000</td><td class="p-2"><input type="number" class="w-20 text-right border rounded h-8 billetaje-input" data-val="50000" oninput="calculateBilletaje()"></td><td class="p-3 text-right font-mono subtotal-cell">0</td></tr>
+                                    <tr><td class="p-3 font-bold">20.000</td><td class="p-2"><input type="number" class="w-20 text-right border rounded h-8 billetaje-input" data-val="20000" oninput="calculateBilletaje()"></td><td class="p-3 text-right font-mono subtotal-cell">0</td></tr>
+                                    <tr><td class="p-3 font-bold">10.000</td><td class="p-2"><input type="number" class="w-20 text-right border rounded h-8 billetaje-input" data-val="10000" oninput="calculateBilletaje()"></td><td class="p-3 text-right font-mono subtotal-cell">0</td></tr>
+                                    <tr><td class="p-3 font-bold">5.000</td><td class="p-2"><input type="number" class="w-20 text-right border rounded h-8 billetaje-input" data-val="5000" oninput="calculateBilletaje()"></td><td class="p-3 text-right font-mono subtotal-cell">0</td></tr>
+                                    <tr><td class="p-3 font-bold">2.000</td><td class="p-2"><input type="number" class="w-20 text-right border rounded h-8 billetaje-input" data-val="2000" oninput="calculateBilletaje()"></td><td class="p-3 text-right font-mono subtotal-cell">0</td></tr>
+                                    <tr><td class="p-3 font-bold">Monedas</td><td class="p-2"><input type="number" class="w-20 text-right border rounded h-8 billetaje-input" data-val="1" oninput="calculateBilletaje()"></td><td class="p-3 text-right font-mono subtotal-cell">0</td></tr>
+                                </tbody>
+                                <tfoot class="bg-gray-50 font-bold">
+                                    <tr><td colspan="2" class="p-3 text-right">TOTAL EFECTIVO</td><td class="p-3 text-right text-lg text-green-700" id="total-efectivo-display">0 Gs</td></tr>
+                                </tfoot>
+                            </table>
+                        </div>
+                    </div>
+                    <div class="mt-4 flex justify-end">
+                        <button onclick="setCierreTab('egresos')" class="btn-apex-primary">Siguiente: Ver Egresos &rarr;</button>
+                    </div>
+                 </div>
+
+                 <!-- TAB 2: DETALLE DE EGRESOS -->
+                 <div id="cierre-tab-egresos" class="cierre-tab-content hidden">
+                    <div class="card overflow-hidden">
+                        <div class="card-header border-b">Egresos Registrados en la Sesión</div>
+                        <div class="overflow-x-auto">
+                            <table class="w-full text-sm divide-y">
+                                <thead class="bg-gray-50 text-xs text-gray-500 uppercase">
+                                    <tr><th class="p-3 text-left">Hora</th><th class="p-3 text-left">Beneficiario</th><th class="p-3 text-left">Concepto</th><th class="p-3 text-center">Medio</th><th class="p-3 text-right">Monto</th></tr>
+                                </thead>
+                                <tbody id="cierre-egresos-body" class="bg-white divide-y">
+                                    <!-- Populated by JS -->
+                                    <tr class="text-center text-gray-400"><td colspan="5" class="p-4">No hay egresos registrados.</td></tr>
+                                </tbody>
+                                <tfoot class="bg-orange-50 font-bold text-orange-800">
+                                    <tr><td colspan="4" class="p-3 text-right">TOTAL EGRESOS</td><td class="p-3 text-right" id="cierre-total-egresos">0 Gs</td></tr>
+                                </tfoot>
+                            </table>
+                        </div>
+                    </div>
+                    <div class="mt-4 flex justify-end">
+                        <button onclick="setCierreTab('resumen')" class="btn-apex-primary">Siguiente: Resumen Final &rarr;</button>
+                    </div>
+                 </div>
+
+                 <!-- TAB 3: REGISTRAR SOBRANTES (RESUMEN) -->
+                 <div id="cierre-tab-resumen" class="cierre-tab-content hidden">
+                    <div class="max-w-2xl mx-auto space-y-6">
+                        <div class="card p-6 border-t-4 border-t-yoayu-green">
+                            <h3 class="text-lg font-bold text-gray-700 mb-4 border-b pb-2">Resumen Final del Cierre</h3>
+                            <div class="space-y-3 mb-6">
+                                <div class="flex justify-between items-center"><span class="text-gray-600">Saldo Sistema (Teórico)</span><span class="font-bold text-gray-800 text-lg">Gs. 5.000.000</span></div>
+                                <div class="flex justify-between items-center border-t pt-2"><span class="text-gray-600">Recuento Efectivo (Arqueo)</span><span class="font-bold text-blue-600 text-lg" id="resumen-efectivo">0 Gs</span></div>
+                                <div class="flex justify-between items-center"><span class="text-gray-600">Cheques / Otros Valores</span><input type="text" class="w-32 text-right font-bold border rounded h-8" value="0"></div>
+                                <div class="flex justify-between items-center border-t border-b py-2 bg-gray-50 px-2 -mx-2 mt-2"><span class="font-bold text-gray-700">TOTAL ARQUEO</span><span class="font-bold text-xl text-gray-900" id="total-arqueo-final">0 Gs</span></div>
+                                <div class="flex justify-between items-center pt-2"><span class="font-bold text-gray-500">DIFERENCIA (Sobrante/Faltante)</span><span class="font-bold text-xl text-red-500" id="arqueo-diff">-5.000.000 Gs</span></div>
+                            </div>
+                            
+                            <label class="block text-sm font-bold text-gray-600 mb-1">Observaciones / Justificación</label>
+                            <textarea class="w-full border rounded p-2 text-sm h-20 mb-4" placeholder="Ingrese justificación si existe diferencia..."></textarea>
+                            
+                            <div class="flex flex-col gap-3">
+                                <button class="w-full py-3 border border-gray-300 rounded text-gray-600 hover:bg-gray-50 font-bold shadow-sm">Guardar Arqueo (Preliminar)</button>
+                                <button onclick="confirmarCierre()" class="w-full py-3 bg-red-600 hover:bg-red-700 text-white rounded font-bold shadow-lg flex justify-center items-center">
+                                    <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"></path></svg>
+                                    CONFIRMAR Y CERRAR CAJA
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                 </div>
+             </section>
+
+            <!-- CAJA (MODIFICADA CON BOTÓN DE SOLICITUD) -->
+            <section id="caja-view" class="view-content space-y-4 hidden-section">
+                 <!-- Botonera Superior -->
+                 <div class="flex justify-between items-center mb-4">
+                     <div class="bg-white rounded p-1 shadow-sm border inline-flex">
+                        <button id="btn-mode-ingreso" onclick="setTransactionMode('ingreso')" class="px-6 py-2 text-sm font-medium rounded transition-colors bg-green-50 text-yoayu-green border border-yoayu-green">Registrar Cobro (Ingreso)</button>
+                        <button id="btn-mode-egreso" onclick="setTransactionMode('egreso')" class="px-6 py-2 text-sm font-medium rounded transition-colors text-gray-500 hover:bg-gray-50">Registrar Pago (Egreso)</button>
+                     </div>
+                     
+                     <!-- BOTÓN NUEVO: CARGAR SOLICITUD -->
+                     <button onclick="openRequestsModal()" class="flex items-center gap-2 bg-indigo-600 hover:bg-indigo-700 text-white px-5 py-2 rounded shadow-md transition-all transform hover:-translate-y-0.5">
+                         <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"></path></svg>
+                         <span class="font-bold text-sm">Cargar Solicitud</span>
+                         <span id="badge-requests" class="hidden bg-red-500 text-white text-[10px] px-1.5 py-0.5 rounded-full">0</span>
+                     </button>
+                 </div>
+
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+                    <div class="md:col-span-1 card h-full">
+                        <div class="card-header">1. Búsqueda de Socio</div>
+                        <div class="p-4 space-y-4">
+                            <div>
+                                <label>N° Socio o C.I.</label>
+                                <div class="flex"><input type="text" id="member-search-input" placeholder="Ej: 1001" class="w-full rounded-r-none border-r-0"><button onclick="searchMember()" class="bg-yoayu-green text-white px-4 rounded-r hover:bg-yoayu-dark h-10 flex items-center justify-center"><svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path></svg></button></div>
+                            </div>
+                            <div id="member-info" class="hidden p-3 bg-gray-50 border rounded text-sm space-y-1"><p class="font-bold text-gray-800 text-base" id="member-name">--</p><p class="text-gray-500" id="member-id">--</p></div>
+                        </div>
+                    </div>
+                    <!-- Posición Consolidada (RESTAURADA) -->
+                    <div class="md:col-span-2 card" id="member-balances-card">
+                        <div class="card-header">2. Posición Consolidada</div>
+                        <div id="balances-container" class="p-4 grid grid-cols-2 md:grid-cols-4 gap-4 hidden">
+                            <div class="text-center p-2 bg-blue-50 rounded border border-blue-100">
+                                <p class="text-xs text-blue-600 font-bold uppercase">Ahorros</p>
+                                <p class="text-lg font-bold text-gray-800" id="bal-ahorro">0 Gs</p>
+                            </div>
+                            <div class="text-center p-2 bg-green-50 rounded border border-green-100">
+                                <p class="text-xs text-green-600 font-bold uppercase">Aportes</p>
+                                <p class="text-lg font-bold text-gray-800" id="bal-aporte">0 Gs</p>
+                            </div>
+                            <div class="text-center p-2 bg-red-50 rounded border border-red-100">
+                                <p class="text-xs text-red-600 font-bold uppercase">Créditos</p>
+                                <p class="text-lg font-bold text-gray-800" id="bal-credito">0 Gs</p>
+                            </div>
+                            <div class="text-center p-2 bg-purple-50 rounded border border-purple-100">
+                                <p class="text-xs text-purple-600 font-bold uppercase">Tarjetas</p>
+                                <p class="text-lg font-bold text-gray-800" id="bal-tarjeta">0 Gs</p>
+                            </div>
+                        </div>
+                        <div id="balances-placeholder" class="p-4 flex items-center justify-center h-32 text-gray-400 text-sm italic">
+                            Busque un socio para ver su posición consolidada.
+                        </div>
+                    </div>
+                </div>
+
+                <div id="ingresos-container" class="card">
+                    <div class="card-header flex justify-between items-center"><span>3. Obligaciones Pendientes</span><span class="text-xs bg-green-100 text-green-800 px-2 py-1 rounded">Ingreso</span></div>
+                    <div class="p-4">
+                        <!-- Pestañas actualizadas -->
+                        <div class="flex border-b mb-4 overflow-x-auto space-x-1">
+                            <button class="px-3 py-2 text-sm font-medium text-yoayu-green border-b-2 border-yoayu-green whitespace-nowrap" data-tab="aportes" onclick="setActiveTab(this)">Aportes/Fondos</button>
+                            <button class="px-3 py-2 text-sm font-medium text-gray-500 hover:text-gray-700 whitespace-nowrap" data-tab="creditos" onclick="setActiveTab(this)">Créditos</button>
+                            <button class="px-3 py-2 text-sm font-medium text-gray-500 hover:text-gray-700 whitespace-nowrap" data-tab="tarjetas" onclick="setActiveTab(this)">Tarjetas</button>
+                            <button class="px-3 py-2 text-sm font-medium text-gray-500 hover:text-gray-700 whitespace-nowrap" data-tab="servicios" onclick="setActiveTab(this)">Servicios</button>
+                            <button class="px-3 py-2 text-sm font-medium text-gray-500 hover:text-gray-700 whitespace-nowrap" data-tab="ahorros" onclick="setActiveTab(this)">Ahorros</button>
+                            <button class="px-3 py-2 text-sm font-medium text-gray-500 hover:text-gray-700 whitespace-nowrap" data-tab="depositos" onclick="setActiveTab(this)">Depósitos (Varios)</button>
+                        </div>
+                        
+                        <!-- Toggle Adelantos -->
+                        <div class="mb-2 flex justify-end">
+                            <label class="inline-flex items-center cursor-pointer">
+                                <input type="checkbox" id="toggle-adelantos" class="sr-only peer" onchange="toggleAdelantos()">
+                                <div class="relative w-9 h-5 bg-gray-200 peer-focus:outline-none peer-focus:ring-2 peer-focus:ring-blue-300 rounded-full peer peer-checked:after:translate-x-full rtl:peer-checked:after:-translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:start-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-blue-600"></div>
+                                <span class="ms-3 text-xs font-medium text-gray-600">Ver Cuotas Futuras (Adelanto)</span>
+                            </label>
+                        </div>
+
+                        <!-- Sección Depósitos (Dinámica - Solo visible en tab Depositos) -->
+                        <div id="deposito-form" class="hidden bg-blue-50 p-4 rounded mb-4 border border-blue-100">
+                             <h4 class="text-sm font-bold text-blue-800 mb-2">Nuevo Depósito Libre</h4>
+                             <div class="grid grid-cols-3 gap-4 mb-2">
+                                 <div><label>Cuenta Destino</label><select id="dep-cuenta" class="w-full h-8 text-xs"><option>Ahorro a la Vista</option><option>Plazo Fijo</option></select></div>
+                                 <div><label>Monto</label><input type="text" id="dep-monto" class="w-full h-8 text-right font-bold" placeholder="0"></div>
+                                 <div class="flex items-end"><button onclick="addDepositoLine()" class="bg-blue-600 text-white px-4 py-1.5 rounded text-xs font-bold w-full">Agregar a Cobro</button></div>
+                             </div>
+                        </div>
+
+                        <!-- Sección Servicios (Dinámica - Solo visible en tab Servicios) -->
+                        <div id="servicios-form" class="hidden bg-orange-50 p-4 rounded mb-4 border border-orange-100">
+                            <h4 class="text-sm font-bold text-orange-800 mb-2">Pago de Servicios</h4>
+                            <div class="grid grid-cols-3 gap-4 mb-2">
+                                <div><label>Servicio</label><select class="w-full h-8 text-xs"><option>ANDE</option><option>COPACO</option><option>ESSAP</option></select></div>
+                                <div><label>Monto</label><input type="text" id="serv-monto" value="150000" class="w-full h-8 text-right font-bold" placeholder="0"></div>
+                                <div class="flex items-end"><button onclick="addServicioLine()" class="bg-orange-600 text-white px-4 py-1.5 rounded text-xs font-bold w-full">Agregar a Cobro</button></div>
+                            </div>
+                        </div>
+
+                        <div class="overflow-x-auto mb-6">
+                            <table class="w-full text-sm divide-y">
+                                <thead class="bg-gray-50 text-xs text-gray-500 uppercase">
+                                    <tr><th class="p-3 text-left w-10">Pagar</th><th class="p-3 text-left">Concepto</th><th class="p-3 text-left">Vencimiento</th><th class="p-3 text-right">Cuota</th><th class="p-3 text-right text-red-500">Mora</th><th class="p-3 text-right">Total</th></tr>
+                                </thead>
+                                <tbody id="obligation-table-body" class="divide-y"><tr class="text-center text-gray-400"><td colspan="6" class="p-4">Busque un socio para ver datos.</td></tr></tbody>
+                            </table>
+                        </div>
+                        
+                        <!-- Bloque de Pagos -->
+                        <div class="border-t pt-4 grid grid-cols-1 md:grid-cols-3 gap-8">
+                            <div class="md:col-span-2 space-y-4">
+                                <div class="flex justify-between items-center">
+                                    <h4 class="text-sm font-bold text-gray-700">4. Formas de Pago</h4>
+                                    <button onclick="addPaymentMethod()" id="add-payment-btn" class="text-xs bg-gray-100 text-gray-700 px-2 py-1 rounded border hover:bg-gray-200" disabled>+ Agregar</button>
+                                </div>
+                                <div id="payment-methods-container" class="space-y-2"></div>
+                                
+                                <div class="p-4 rounded-lg shadow-inner bg-green-50 border-2 border-green-100 grid grid-cols-2 gap-4">
+                                    <div><span class="text-gray-600 font-semibold text-lg">Total Recibido:</span><span id="total-received-amount" class="font-extrabold text-xl text-yoayu-green ml-2">0 Gs</span></div>
+                                    <div><span class="text-gray-600 font-semibold text-lg">Vuelto:</span><span id="change-amount" class="font-extrabold text-xl text-yoayu-green ml-2">0 Gs</span></div>
+                                </div>
+                            </div>
+                            <div class="bg-yoayu-green/5 p-4 rounded border border-yoayu-green/20 flex flex-col justify-between">
+                                <div><p class="text-xs text-gray-500 uppercase font-semibold">Total a Pagar</p><p class="text-3xl font-bold text-yoayu-green" id="total-payment">0 Gs</p></div>
+                                <button onclick="processPayment()" id="process-payment-btn" class="w-full btn-apex-primary mt-4 disabled:opacity-50 h-10" disabled>CONFIRMAR COBRO</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Egreso Container (RESTAURADO) -->
+                <div id="egresos-container" class="card hidden-section border-t-4 border-t-orange-500">
+                    <div class="card-header flex justify-between items-center">
+                        <span>3. Detalles del Pago (Egreso)</span>
+                        <span class="text-xs bg-orange-100 text-orange-800 px-2 py-1 rounded">Salida de Dinero</span>
+                    </div>
+                    <div class="p-6">
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
+                            <div>
+                                <label>Concepto del Egreso</label>
+                                <select id="egreso-concepto" class="w-full h-10 border-gray-300 rounded" onchange="toggleEgresoCampos()">
+                                    <option value="retiro">Retiro de Ahorros</option>
+                                    <option value="proveedor">Pago a Proveedores</option>
+                                    <option value="gastos">Gastos de Caja Chica</option>
+                                    <option value="anticipo">Anticipo de Sueldo</option>
+                                </select>
+                            </div>
+                             <div>
+                                <label>Beneficiario</label>
+                                <input type="text" id="egreso-beneficiario" class="w-full h-10 border-gray-300 rounded" placeholder="Nombre del que recibe...">
+                            </div>
+                            <div>
+                                <label>N° Comprobante / Recibo</label>
+                                <input type="text" id="egreso-doc" class="w-full h-10 border-gray-300 rounded" placeholder="Ej: REC-001-001-123">
+                            </div>
+                            <div>
+                                <label>Monto a Pagar</label>
+                                <input type="text" id="egreso-monto" class="w-full h-10 text-right font-bold text-lg text-orange-600 border-gray-300 rounded" placeholder="0">
+                            </div>
+                        </div>
+                        
+                        <div class="bg-gray-50 p-4 rounded border border-gray-200 mb-6">
+                             <label class="mb-2">Observaciones</label>
+                             <textarea id="egreso-obs" class="w-full border-gray-300 rounded p-2 text-sm h-20" placeholder="Detalle adicional del pago..."></textarea>
+                        </div>
+
+                        <div class="flex justify-end items-center gap-4">
+                            <div class="text-right mr-4">
+                                <span class="block text-xs text-gray-500 uppercase">Total Egreso</span>
+                                <span class="text-2xl font-bold text-orange-600" id="total-egreso-display">0 Gs</span>
+                            </div>
+                            <button onclick="processEgreso()" class="bg-orange-600 hover:bg-orange-700 text-white font-bold py-3 px-8 rounded shadow-lg flex items-center">
+                                <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 9V7a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2m2 4h10a2 2 0 002-2v-6a2 2 0 00-2-2H9a2 2 0 00-2 2v6a2 2 0 002 2zm7-5a2 2 0 11-4 0 2 2 0 014 0z"></path></svg>
+                                CONFIRMAR PAGO
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+        </main>
+    </div>
+</div>
+
+<!-- MODAL SOLICITUDES PENDIENTES (CAJA) -->
+<div id="modal-requests" class="fixed inset-0 hidden overflow-y-auto h-full w-full modal-backdrop flex items-center justify-center z-50">
+    <div class="relative p-6 border w-full max-w-2xl shadow-2xl rounded-lg bg-white">
+        <div class="flex justify-between items-center border-b pb-3 mb-4">
+            <h3 class="text-lg font-bold text-indigo-800">Solicitudes de Pago Pendientes</h3>
+            <button onclick="closeRequestsModal()" class="text-gray-400 hover:text-gray-600"><svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg></button>
+        </div>
+        <div class="overflow-y-auto max-h-96">
+            <table class="w-full text-sm text-left">
+                <thead class="bg-gray-50 text-xs text-gray-500 uppercase">
+                    <tr><th class="p-3">ID</th><th class="p-3">Socio</th><th class="p-3">Origen (Banco)</th><th class="p-3 text-right">Monto</th><th class="p-3"></th></tr>
+                </thead>
+                <tbody id="requests-list-body" class="divide-y">
+                    <!-- JS Populated -->
+                </tbody>
+            </table>
+            <div id="no-requests-msg" class="hidden text-center py-6 text-gray-400 italic">No hay solicitudes pendientes.</div>
+        </div>
+    </div>
+</div>
+
+<script>
+    // --- MOCK DATA ---
+    const MOCK_MEMBER_BALANCES = {
+        '1001': { 
+            id: '1001', 
+            name: 'Juan Pérez García', 
+            saldoAhorro: 12000000, 
+            saldoAporte: 6500000, 
+            saldoTarjeta: 1500000, // Nuevo
+            capitalVencido: 75000, 
+            moraAporte: 5000, 
+            moraCredito: 97000 
+        }
+    };
+    
+    // Obligaciones incluyendo Futuras, Tarjetas y Ahorros Programados
+    const MOCK_MEMBER_OBLIGATIONS = {
+        '1001': [
+            { id: '1001_1', type: 'creditos', concept: 'Préstamo Personal - Cuota 18/24', date: '2024-10-15', amount: 550000, mora: 75000, total: 625000, future: false },
+            { id: '1001_1_fut1', type: 'creditos', concept: 'Préstamo Personal - Cuota 19/24', date: '2024-11-15', amount: 550000, mora: 0, total: 550000, future: true },
+            { id: '1001_3', type: 'aportes', concept: 'Aporte Ordinario Nov.', date: '2024-11-10', amount: 50000, mora: 5000, total: 55000, future: false },
+            
+            // Nuevos datos mockeados
+            { id: '1001_tc', type: 'tarjetas', concept: 'Tarjeta Crédito - Cierre Oct', date: '2024-11-05', amount: 450000, mora: 0, total: 450000, future: false },
+            { id: '1001_ah_prog', type: 'ahorros', concept: 'Ahorro Programado - Cuota 5/12', date: '2024-11-10', amount: 200000, mora: 0, total: 200000, future: false }
+        ]
+    };
+    
+    // Mock Data para Cajas
+    let MOCK_CAJAS = [
+        { id: 1, codigo: '001', descripcion: 'CAJA CENTRAL 1', tipo: 'Caja Normal', moneda: 'PYG - Guarani', minApertura: 500000, sucursal: 'Casa Matriz', agencia: 'Agencia Casa Matriz', estado: 'Activo' },
+        { id: 2, codigo: '002', descripcion: 'CAJA CENTRAL 2', tipo: 'Caja Chica', moneda: 'PYG - Guarani', minApertura: 10000000, sucursal: 'Casa Matriz', agencia: 'Agencia Casa Matriz', estado: 'Activo' }
+    ];
+
+    // Mock Data para Asignaciones
+    let MOCK_ASSIGNMENTS = [
+        { id: 1, sucursal: 'Casa Matriz', agencia: 'Agencia Casa Matriz', codigo: '001', caja: '001-Caja Central 1', tipo: 'Caja Normal', cajero: 'Mario Cano', importe: 500000, estado: 'Activo' },
+        { id: 2, sucursal: 'Casa Matriz', agencia: 'Agencia Casa Matriz', codigo: '002', caja: '002-Caja Central 2', tipo: 'Caja Chica', cajero: 'Raul Perez', importe: 10000000, estado: 'Inactivo' }
+    ];
+    
+    // Mock Data para Transacciones (Restaurada para Reportes)
+    const MOCK_TRANSACTIONS = [
+        { date: '2025-11-27 08:05', type: 'Ingreso', receipt: 'REC-00100', member: 'Juan Pérez', concept: 'Aporte Mensual', method: 'Efectivo', amount: 65000 },
+        { date: '2025-11-27 08:20', type: 'Ingreso', receipt: 'REC-00101', member: 'Maria Lopez', concept: 'Cuota Crédito', method: 'Efectivo', amount: 500000 },
+        { date: '2025-11-27 09:00', type: 'Egreso', receipt: 'EGR-0050', member: 'Limpieza Express SA', concept: 'Pago Limpieza', method: 'Cheque', amount: 1500000 },
+        { date: '2025-11-27 10:00', type: 'Egreso', receipt: 'EGR-0051', member: 'Juan Pérez', concept: 'Retiro Ahorro', method: 'Efectivo', amount: 300000 }
+    ];
+    
+    // Mock Data Tesorería
+    let LIVE_CAJAS_STATUS = [
+        { id: '001', desc: 'CAJA CENTRAL 1', cajero: 'Juan Perez', estado: 'Cerrada', saldo: 0, sucursal: 'Casa Matriz' },
+        { id: '002', desc: 'CAJA CENTRAL 2', cajero: 'Maria Lopez', estado: 'Abierta', saldo: 12500000, sucursal: 'Casa Matriz' },
+        { id: '004', desc: 'CAJA AGENCIA 1', cajero: 'Ana Torres', estado: 'Cerrada', saldo: 0, sucursal: 'Agencia 1' }
+    ];
+
+    // --- NUEVO: TRANSFERENCIAS BANCARIAS (MOCK PARA OPERADOR) ---
+    const MOCK_TRANSFERS = [
+        { id: 'TRF-001', bank: 'Banco Itaú -> Itaú', date: '2025-10-28', ref: 'REF-998877', amount: 1500000, used: 0 },
+        { id: 'TRF-002', bank: 'Banco Atlas -> Continental', date: '2025-10-28', ref: 'REF-112233', amount: 550000, used: 0 },
+        { id: 'TRF-003', bank: 'Visión Banco -> Visión', date: '2025-10-29', ref: 'REF-445566', amount: 3000000, used: 0 }
+    ];
+
+    // --- NUEVO: SOLICITUDES GENERADAS POR OPERADOR ---
+    let MOCK_REQUESTS = []; 
+    let requestIdCounter = 1;
+
+    // --- ESTADO GLOBAL ---
+    let appState = { cajaAbierta: false, montoApertura: 0, fechaApertura: null };
+    let currentTotal = 0; 
+    let selectedObligations = [];
+    let paymentLineId = 0;
+    let selectedTransfer = null; // Para el operador
+    let opSelectedObligations = []; // Para el operador
+    
+    // --- ESTADO OPERADOR (NUEVO) ---
+    let opCurrentTab = 'creditos';
+    let opShowFuture = false;
+    
+    // Estado Caja
+    let currentCajaTab = 'aportes'; // Tab por defecto
+
+    document.addEventListener('DOMContentLoaded', () => {
+        document.getElementById('header-date').textContent = new Date().toLocaleDateString('es-PY');
+        initOperatorView();
+        switchView('dashboard');
+        loadReports();
+        
+        // Init dates
+        document.getElementById('reg-transf-fecha').valueAsDate = new Date();
+    });
+
+    // --- FUNCION setTransactionMode AGREGADA ---
+    function setTransactionMode(mode) {
+        const btnIngreso = document.getElementById('btn-mode-ingreso');
+        const btnEgreso = document.getElementById('btn-mode-egreso');
+        const contIngreso = document.getElementById('ingresos-container');
+        const contEgreso = document.getElementById('egresos-container');
+
+        if(mode === 'ingreso') {
+            btnIngreso.className = "px-6 py-2 text-sm font-medium rounded transition-colors bg-green-50 text-yoayu-green border border-yoayu-green";
+            btnEgreso.className = "px-6 py-2 text-sm font-medium rounded transition-colors text-gray-500 hover:bg-gray-50";
+            contIngreso.classList.remove('hidden-section');
+            contEgreso.classList.add('hidden-section');
+        } else {
+            btnIngreso.className = "px-6 py-2 text-sm font-medium rounded transition-colors text-gray-500 hover:bg-gray-50";
+            btnEgreso.className = "px-6 py-2 text-sm font-medium rounded transition-colors bg-orange-50 text-orange-600 border border-orange-500";
+            contIngreso.classList.add('hidden-section');
+            contEgreso.classList.remove('hidden-section');
+        }
+    }
+
+    function editCaja(id) { showCajasForm(); } 
+    function updateAssignDetails() { 
+        const id = document.getElementById('assign-caja-select').value;
+        const caja = MOCK_CAJAS.find(c => c.id == id);
+        if(caja) document.getElementById('assign-tipo').value = caja.tipo;
+    }
+    
+    function toggleEgresoCampos() {
+        // Logic to show/hide fields based on concept (mock)
+    }
+    
+    function processEgreso() {
+        alert("Egreso Registrado Correctamente");
+        // Reset Logic
+        document.getElementById('egreso-monto').value = '';
+        document.getElementById('egreso-doc').value = '';
+        document.getElementById('egreso-beneficiario').value = '';
+    }
+
+    function switchView(viewId) {
+        document.querySelectorAll('.view-content').forEach(v => {
+            v.classList.remove('active');
+            v.classList.add('hidden-section');
+            // Check ID logic
+            if(v.id === viewId + '-view') {
+                v.classList.remove('hidden-section');
+                v.classList.add('active');
+            }
+        });
+
+        // Specific logic for Cajas Maintenance and Assignment (Nested Views)
+        if (viewId === 'mant-cajas') {
+             const listView = document.getElementById('mant-cajas-view');
+             const formView = document.getElementById('mant-cajas-form-view');
+             if (listView) { listView.classList.remove('hidden-section'); listView.classList.add('active'); }
+             if (formView) { formView.classList.add('hidden-section'); formView.classList.remove('active'); }
+             renderCajasTable();
+        } 
+        else if (viewId === 'assign-cajas') {
+            const listView = document.getElementById('assign-cajas-view');
+            const formView = document.getElementById('assign-cajas-form-view');
+             if (listView) { listView.classList.remove('hidden-section'); listView.classList.add('active'); }
+             if (formView) { formView.classList.add('hidden-section'); formView.classList.remove('active'); }
+             renderAssignmentsTable();
+        }
+        else if (viewId === 'gestion-transferencias') {
+            renderAdminTransfers();
+        }
+        else if (viewId === 'solicitudes') {
+            renderTransfers();
+            renderRequestsSummary(); // Update Summary Table
+        }
+        else if (viewId === 'cierre') {
+             // Reset to first tab
+             setCierreTab('arqueo');
+             renderCierreEgresos(); // Refresh table if opened
+        }
+
+        // Actualizar Breadcrumbs y Nav
+        document.querySelectorAll('.nav-item').forEach(i => i.classList.remove('active-link'));
+        const navItem = document.querySelector(`.nav-item[data-view="${viewId}"]`);
+        if (navItem) navItem.classList.add('active-link');
+        
+        // Título
+        const titles = { 
+            'dashboard': 'Panel Principal', 'solicitudes': 'Solicitudes de Pago', 'caja': 'Caja', 
+            'mant-cajas': 'Mantenimiento de Cajas', 'assign-cajas': 'Asignación de Cajas',
+            'tesoreria': 'Monitor de Tesorería', 'obligaciones': 'Consulta Obligaciones', 'reportes': 'Reportes y Resumen',
+            'gestion-transferencias': 'Registro de Transferencias'
+        };
+        if(titles[viewId]) document.getElementById('page-title').textContent = titles[viewId];
+
+        // Lógica específica
+        if(viewId === 'tesoreria') renderTesoreriaTable();
+        if(viewId === 'reportes') loadReports();
+    }
+    
+    // --- GESTIÓN DE TRANSFERENCIAS (TESORERÍA) ---
+    function renderAdminTransfers() {
+        const tbody = document.getElementById('admin-transfers-list-body');
+        tbody.innerHTML = '';
+        MOCK_TRANSFERS.forEach(t => {
+            const available = t.amount - t.used;
+            tbody.insertAdjacentHTML('beforeend', `
+                <tr class="hover:bg-gray-50 border-b text-xs">
+                    <td class="p-3 font-bold text-gray-700">${t.bank}</td>
+                    <td class="p-3 text-gray-600">${t.date}</td>
+                    <td class="p-3 text-gray-600 font-mono">${t.ref}</td>
+                    <td class="p-3 text-right font-medium text-gray-800">${formatCurrency(t.amount)}</td>
+                    <td class="p-3 text-right font-bold ${available > 0 ? 'text-green-600' : 'text-gray-400'}">${formatCurrency(available)}</td>
+                </tr>
+            `);
+        });
+    }
+    
+    function autoFillDestino() {
+        const banco = document.getElementById('reg-transf-banco-dst').value;
+        const cta = document.getElementById('reg-transf-cta-dst');
+        if (banco === 'itau') cta.value = '700-123456-9';
+        else if (banco === 'continental') cta.value = '01-00-987654';
+        else if (banco === 'vision') cta.value = '90-887766-5';
+        else cta.value = '';
+    }
+
+    function registerTransfer() {
+        // ORIGEN
+        const bancoOrg = document.getElementById('reg-transf-banco-org').value;
+        const ctaOrg = document.getElementById('reg-transf-cta-org').value;
+        const titularOrg = document.getElementById('reg-transf-titular-org').value;
+        
+        // DESTINO
+        const bancoDstVal = document.getElementById('reg-transf-banco-dst');
+        const bancoDst = bancoDstVal.options[bancoDstVal.selectedIndex].text;
+        
+        // DETALLES
+        const fecha = document.getElementById('reg-transf-fecha').value;
+        const ref = document.getElementById('reg-transf-ref').value;
+        const monto = parseInt(document.getElementById('reg-transf-monto').value);
+        const fileInput = document.getElementById('reg-transf-img');
+
+        if (!fecha || !ref || !monto || monto <= 0 || !titularOrg) {
+            alert("Por favor complete todos los campos requeridos.");
+            return;
+        }
+
+        const fileName = fileInput.files.length > 0 ? fileInput.files[0].name : "Sin Imagen";
+        
+        // Build summary string for table (Simplified)
+        const bankString = `${bancoOrg} -> ${bancoDst.split(' ')[1] || bancoDst}`;
+
+        const newTransfer = {
+            id: `TRF-${Date.now()}`,
+            bank: bankString,
+            date: fecha,
+            ref: `REF-${ref}`,
+            amount: monto,
+            img: fileName, // Store mock reference
+            used: 0
+        };
+
+        MOCK_TRANSFERS.unshift(newTransfer); // Add to top
+        
+        alert("Transferencia Registrada Exitosamente.\nComprobante adjunto: " + fileName);
+        
+        // Reset form partial
+        document.getElementById('reg-transf-ref').value = '';
+        document.getElementById('reg-transf-monto').value = '';
+        document.getElementById('reg-transf-titular-org').value = '';
+        document.getElementById('reg-transf-doc-org').value = ''; // Reset doc input
+        document.getElementById('reg-transf-cta-org').value = '';
+        fileInput.value = ''; 
+        
+        // Refresh tables
+        renderAdminTransfers();
+        renderTransfers(); 
+    }
+
+    // --- LÓGICA DEL OPERADOR ---
+
+    function renderTransfers() {
+        const list = document.getElementById('transfers-list');
+        list.innerHTML = '';
+        MOCK_TRANSFERS.forEach(t => {
+            const available = t.amount - t.used;
+            if (available <= 0) return; // Hide fully used
+
+            const div = document.createElement('div');
+            div.className = `p-3 border rounded cursor-pointer hover:bg-indigo-50 transition-colors ${selectedTransfer && selectedTransfer.id === t.id ? 'border-indigo-500 ring-1 ring-indigo-500 bg-indigo-50' : 'border-gray-200 bg-white'}`;
+            div.onclick = () => selectTransfer(t);
+            div.innerHTML = `
+                <div class="flex justify-between items-start mb-1">
+                    <span class="font-bold text-gray-700 text-sm">${t.bank}</span>
+                    <span class="text-indigo-600 font-bold text-sm">${formatCurrency(available)}</span>
+                </div>
+                <div class="flex justify-between text-xs text-gray-500">
+                    <span>${t.ref}</span>
+                    <span>${t.date}</span>
+                </div>
+            `;
+            list.appendChild(div);
+        });
+    }
+
+    function selectTransfer(t) {
+        selectedTransfer = t;
+        renderTransfers(); // Update styles
+        
+        const badge = document.getElementById('selected-transfer-badge');
+        badge.textContent = `Ref: ${t.ref} | ${t.bank}`;
+        badge.classList.remove('hidden');
+        badge.className = "bg-indigo-100 text-indigo-800 text-xs px-3 py-1 rounded border border-indigo-200 font-medium";
+        
+        document.getElementById('op-transfer-amount').textContent = formatCurrency(t.amount - t.used);
+        updateOpTotals();
+    }
+    
+    function setOpActiveTab(btn) {
+        opCurrentTab = btn.dataset.opTab;
+        
+        // Visuals Tabs
+        document.querySelectorAll('button[data-op-tab]').forEach(b => {
+            b.classList.remove('text-indigo-600', 'border-indigo-600');
+            b.classList.add('text-gray-500', 'border-transparent');
+        });
+        btn.classList.add('text-indigo-600', 'border-indigo-600');
+        btn.classList.remove('text-gray-500', 'border-transparent');
+        
+        // Show/Hide Elements based on tab
+        const adelantosToggle = document.getElementById('op-toggle-adelantos-container');
+        const depositoForm = document.getElementById('op-deposito-form');
+        
+        if (opCurrentTab === 'creditos') {
+            adelantosToggle.classList.remove('hidden');
+            depositoForm.classList.add('hidden');
+        } else if (opCurrentTab === 'depositos') {
+            adelantosToggle.classList.add('hidden');
+            depositoForm.classList.remove('hidden');
+        } else {
+            adelantosToggle.classList.add('hidden');
+            depositoForm.classList.add('hidden');
+        }
+        
+        renderOpTable();
+    }
+    
+    function toggleOpAdelantos() {
+        opShowFuture = document.getElementById('op-toggle-adelantos').checked;
+        renderOpTable();
+    }
+
+    function opSearchMember() {
+        const id = document.getElementById('op-member-search').value.trim();
+        const resDiv = document.getElementById('op-member-result');
+        const conceptsDiv = document.getElementById('op-concepts-container');
+        const emptyDiv = document.getElementById('op-empty-state');
+
+        if (MOCK_MEMBER_BALANCES[id]) {
+            resDiv.textContent = MOCK_MEMBER_BALANCES[id].name;
+            resDiv.classList.remove('hidden');
+            conceptsDiv.classList.remove('hidden');
+            emptyDiv.classList.add('hidden');
+            
+            opSelectedObligations = []; // Reset selections on new search
+            // Reset filters default
+            opCurrentTab = 'creditos';
+            opShowFuture = false;
+            document.getElementById('op-toggle-adelantos').checked = false;
+            // Trigger Tab Click to reset view
+            const defaultTab = document.querySelector('button[data-op-tab="creditos"]');
+            if(defaultTab) setOpActiveTab(defaultTab);
+            else renderOpTable();
+            
+            updateOpTotals();
+
+        } else {
+            resDiv.classList.add('hidden');
+            conceptsDiv.classList.add('hidden');
+            emptyDiv.classList.remove('hidden');
+            alert("Socio no encontrado");
+        }
+    }
+    
+    function renderOpTable() {
+        const id = document.getElementById('op-member-search').value.trim();
+        const tbody = document.getElementById('op-obligations-body');
+        tbody.innerHTML = '';
+        
+        // 1. Mostrar Obligaciones Seleccionadas (Siempre arriba, para ver lo que agregué)
+        opSelectedObligations.forEach(item => {
+             if (item.id.startsWith('DEP-')) {
+                 const tr = document.createElement('tr');
+                 tr.className = "bg-indigo-50";
+                 tr.innerHTML = `
+                    <td class="p-2 text-indigo-700 font-bold">${item.concept}</td>
+                    <td class="p-2 text-right font-medium">${formatCurrency(item.amount)}</td>
+                    <td class="p-2 text-center">
+                        <button onclick="removeOpItem('${item.id}')" class="text-xs bg-red-100 hover:bg-red-200 text-red-700 px-2 py-1 rounded">Quitar</button>
+                    </td>
+                `;
+                tbody.appendChild(tr);
+             }
+        });
+
+        // 2. Mostrar Obligaciones Disponibles (Base de Datos)
+        if (opCurrentTab !== 'depositos') {
+            const obs = MOCK_MEMBER_OBLIGATIONS[id] || [];
+            
+            obs.forEach(ob => {
+                // Filter Type
+                if (opCurrentTab === 'creditos' && ob.type !== 'creditos') return;
+                if (opCurrentTab === 'aportes' && ob.type !== 'aportes') return;
+                
+                // Filter Future
+                if (!opShowFuture && ob.future) return;
+
+                // Check if already selected
+                const isSelected = opSelectedObligations.some(sel => sel.id === ob.id);
+                
+                const tr = document.createElement('tr');
+                if (isSelected) tr.className = "bg-indigo-50"; 
+                
+                tr.innerHTML = `
+                    <td class="p-2 text-gray-700">${ob.concept} ${ob.future ? '<span class="text-[10px] bg-blue-100 text-blue-800 px-1 rounded">Adelanto</span>' : ''}</td>
+                    <td class="p-2 text-right font-medium">${formatCurrency(ob.total)}</td>
+                    <td class="p-2 text-center">
+                        <button onclick="toggleOpObligation(this, '${ob.id}', '${ob.concept}', ${ob.total})" 
+                            class="text-xs border px-2 py-1 rounded transition-colors ${isSelected ? 'bg-indigo-600 text-white border-indigo-600' : 'bg-gray-100 hover:bg-indigo-100 text-gray-600 hover:text-indigo-700'}">
+                            ${isSelected ? 'Quitar' : 'Agregar'}
+                        </button>
+                    </td>
+                `;
+                tbody.appendChild(tr);
+            });
+        }
+    }
+
+    function toggleOpObligation(btn, id, concept, amount) {
+        const idx = opSelectedObligations.findIndex(o => o.id === id);
+        if (idx === -1) {
+            opSelectedObligations.push({ id, concept, amount });
+        } else {
+            opSelectedObligations.splice(idx, 1);
+        }
+        renderOpTable(); // Re-render to update UI state
+        updateOpTotals();
+    }
+    
+    function addOpDepositoLine() {
+        const type = document.getElementById('op-dep-cuenta').value;
+        const montoStr = document.getElementById('op-dep-monto').value;
+        const monto = parseInt(montoStr) || 0;
+        
+        if (monto > 0) {
+            const newItem = {
+                id: `DEP-${Date.now()}`, // Unique ID for temp item
+                concept: `DEPÓSITO: ${type}`,
+                amount: monto,
+                type: 'deposito' // Marker
+            };
+            opSelectedObligations.push(newItem);
+            document.getElementById('op-dep-monto').value = '';
+            renderOpTable();
+            updateOpTotals();
+        } else {
+            alert("Ingrese un monto válido");
+        }
+    }
+    
+    function removeOpItem(id) {
+        const idx = opSelectedObligations.findIndex(o => o.id === id);
+        if (idx !== -1) {
+            opSelectedObligations.splice(idx, 1);
+            renderOpTable();
+            updateOpTotals();
+        }
+    }
+
+    function updateOpTotals() {
+        const totalPay = opSelectedObligations.reduce((sum, item) => sum + item.amount, 0);
+        document.getElementById('op-total-pay').textContent = formatCurrency(totalPay);
+        
+        let transferAmt = 0;
+        if (selectedTransfer) transferAmt = selectedTransfer.amount - selectedTransfer.used;
+        
+        const balance = transferAmt - totalPay;
+        const balEl = document.getElementById('op-balance');
+        balEl.textContent = formatCurrency(balance);
+        
+        const btn = document.getElementById('btn-create-req');
+        
+        if (balance < 0) {
+            balEl.classList.remove('text-green-600');
+            balEl.classList.add('text-red-600');
+            btn.disabled = true;
+            btn.textContent = "MONTO EXCEDE TRANSFERENCIA";
+        } else if (totalPay === 0 || !selectedTransfer) {
+             balEl.classList.remove('text-red-600');
+             balEl.classList.add('text-green-600');
+             btn.disabled = true;
+             btn.textContent = "GENERAR SOLICITUD DE PAGO";
+        } else {
+            balEl.classList.remove('text-red-600');
+            balEl.classList.add('text-green-600');
+            btn.disabled = false;
+            btn.textContent = "GENERAR SOLICITUD DE PAGO";
+        }
+    }
+
+    function createRequest() {
+        const memberId = document.getElementById('op-member-search').value.trim();
+        const total = opSelectedObligations.reduce((sum, item) => sum + item.amount, 0);
+        
+        const req = {
+            id: `REQ-${requestIdCounter++}`,
+            memberId: memberId,
+            memberName: MOCK_MEMBER_BALANCES[memberId].name,
+            transferId: selectedTransfer.id,
+            transferInfo: `${selectedTransfer.bank} - ${selectedTransfer.ref}`,
+            items: [...opSelectedObligations], // Copy
+            total: total,
+            status: 'PENDING'
+        };
+        
+        MOCK_REQUESTS.push(req);
+        selectedTransfer.used += total;
+        
+        alert(`Solicitud ${req.id} Creada Exitosamente.\nEnviada a Caja.`);
+        
+        // Reset UI
+        opSelectedObligations = [];
+        selectedTransfer = null;
+        document.getElementById('op-member-search').value = '';
+        document.getElementById('op-member-result').classList.add('hidden');
+        document.getElementById('op-concepts-container').classList.add('hidden');
+        document.getElementById('op-empty-state').classList.remove('hidden');
+        document.getElementById('selected-transfer-badge').classList.add('hidden');
+        renderTransfers();
+        renderRequestsSummary(); // Add this line
+        updateRequestsBadge();
+    }
+    
+    function renderRequestsSummary() {
+        const tbody = document.getElementById('op-requests-history-body');
+        if (!tbody) return;
+        
+        tbody.innerHTML = '';
+        
+        if (MOCK_REQUESTS.length === 0) {
+            tbody.innerHTML = '<tr class="text-center text-gray-400"><td colspan="6" class="p-4">No se han generado solicitudes aún.</td></tr>';
+            return;
+        }
+
+        const sortedRequests = [...MOCK_REQUESTS].sort((a, b) => b.id.localeCompare(a.id));
+
+        sortedRequests.forEach(r => {
+            let statusClass = 'bg-gray-100 text-gray-600';
+            let statusLabel = r.status;
+            
+            if (r.status === 'PENDING') {
+                statusClass = 'bg-yellow-100 text-yellow-800';
+                statusLabel = 'Pendiente';
+            } else if (r.status === 'PROCESSED') {
+                statusClass = 'bg-green-100 text-green-800';
+                statusLabel = 'Procesado';
+            }
+
+            tbody.insertAdjacentHTML('beforeend', `
+                <tr class="hover:bg-gray-50">
+                    <td class="p-3 font-bold text-gray-700 text-xs">${r.id}</td>
+                    <td class="p-3 text-gray-600">${r.memberName}</td>
+                    <td class="p-3 text-xs text-gray-500">${r.transferInfo}</td>
+                    <td class="p-3 text-right font-medium text-indigo-700">${formatCurrency(r.total)}</td>
+                    <td class="p-3 text-center">
+                        <span class="px-2 py-1 rounded-full text-[10px] uppercase font-bold ${statusClass}">${statusLabel}</span>
+                    </td>
+                    <td class="p-3 text-center">
+                        <button onclick="alert('Detalle de solicitud ${r.id}')" class="text-indigo-600 hover:text-indigo-900 text-xs font-bold">Ver</button>
+                    </td>
+                </tr>
+            `);
+        });
+    }
+
+    function initOperatorView() {
+        renderTransfers();
+        renderRequestsSummary();
+    }
+
+    // --- LÓGICA DE CAJA (INTEGRACIÓN) ---
+
+    function updateRequestsBadge() {
+        const count = MOCK_REQUESTS.filter(r => r.status === 'PENDING').length;
+        const badge = document.getElementById('badge-requests');
+        badge.textContent = count;
+        badge.classList.toggle('hidden', count === 0);
+    }
+
+    function openRequestsModal() {
+        const pending = MOCK_REQUESTS.filter(r => r.status === 'PENDING');
+        const tbody = document.getElementById('requests-list-body');
+        const noMsg = document.getElementById('no-requests-msg');
+        
+        tbody.innerHTML = '';
+        if (pending.length === 0) {
+            noMsg.classList.remove('hidden');
+        } else {
+            noMsg.classList.add('hidden');
+            pending.forEach(req => {
+                tbody.insertAdjacentHTML('beforeend', `
+                    <tr class="hover:bg-gray-50 border-b">
+                        <td class="p-3 font-bold text-gray-700">${req.id}</td>
+                        <td class="p-3 text-sm">${req.memberName}</td>
+                        <td class="p-3 text-xs text-gray-500">${req.transferInfo}</td>
+                        <td class="p-3 text-right font-bold text-indigo-600">${formatCurrency(req.total)}</td>
+                        <td class="p-3 text-right">
+                            <button onclick="loadRequestIntoTerminal('${req.id}')" class="bg-green-600 text-white text-xs px-3 py-1.5 rounded hover:bg-green-700 font-medium">Cargar</button>
+                        </td>
+                    </tr>
+                `);
+            });
+        }
+        document.getElementById('modal-requests').classList.remove('hidden');
+    }
+
+    function closeRequestsModal() {
+        document.getElementById('modal-requests').classList.add('hidden');
+    }
+
+    function loadRequestIntoTerminal(reqId) {
+        const req = MOCK_REQUESTS.find(r => r.id === reqId);
+        if (!req) return;
+
+        closeRequestsModal();
+
+        // 1. Simular búsqueda de socio
+        document.getElementById('member-search-input').value = req.memberId;
+        searchMember();
+
+        // 2. Seleccionar automáticamente las obligaciones de la solicitud
+        setTimeout(() => {
+            // Uncheck all first
+            document.querySelectorAll('#obligation-table-body input[type="checkbox"]').forEach(cb => {
+                if(cb.checked) cb.click(); 
+            });
+            
+            // Lógica para marcar en tabla los items existentes
+            req.items.forEach(item => {
+                // Si es un depósito, debemos agregarlo visualmente a la tabla porque searchMember no lo trae
+                if (item.id.startsWith('DEP-')) {
+                     const tbody = document.getElementById('obligation-table-body');
+                     tbody.insertAdjacentHTML('afterbegin', `
+                        <tr class="bg-blue-50">
+                            <td class="p-3"><input type="checkbox" checked onclick="return false;" class="w-4 h-4 text-yoayu-green rounded cursor-not-allowed"></td>
+                            <td class="p-3 font-bold text-blue-800">${item.concept}</td>
+                            <td class="p-3 text-gray-500">HOY</td>
+                            <td class="p-3 text-right">${formatCurrency(item.amount)}</td>
+                            <td class="p-3 text-right">-</td>
+                            <td class="p-3 text-right font-bold text-gray-800">${formatCurrency(item.amount)}</td>
+                        </tr>
+                     `);
+                } 
+            });
+            
+            // SIMPLIFICACIÓN PROTOTIPO: Fijar totales
+            currentTotal = req.total;
+            document.getElementById('total-payment').textContent = formatCurrency(currentTotal);
+            
+            // 3. Cargar Medio de Pago BLOQUEADO
+            const container = document.getElementById('payment-methods-container');
+            container.innerHTML = `
+                <div class="p-3 border rounded bg-indigo-50 border-indigo-200 text-sm shadow-sm">
+                    <div class="flex justify-between items-center mb-1">
+                        <span class="font-bold text-indigo-800">Solicitud ${req.id}</span>
+                        <span class="text-xs text-gray-500 uppercase">Precargado</span>
+                    </div>
+                    <div class="grid grid-cols-1 gap-2">
+                        <div class="flex gap-2">
+                            <input type="text" value="Transferencia" readonly class="w-1/3 bg-gray-100 text-gray-500 p-2 border rounded text-xs">
+                            <input type="text" value="${req.transferInfo}" readonly class="w-2/3 bg-gray-100 text-gray-500 p-2 border rounded text-xs">
+                        </div>
+                        <input type="text" value="${formatCurrency(req.total)}" readonly class="w-full font-bold text-right bg-white p-2 border rounded text-indigo-700">
+                    </div>
+                </div>
+            `;
+            
+            // totalPaid fixed
+            document.getElementById('total-received-amount').textContent = formatCurrency(req.total);
+            document.getElementById('change-amount').textContent = '0 Gs';
+            document.getElementById('process-payment-btn').disabled = false;
+            
+            req.status = 'PROCESSED';
+            updateRequestsBadge();
+            
+            alert(`Solicitud ${reqId} cargada.\n\nIncluye depósitos o cuotas adelantadas seleccionadas por el operador.`);
+            
+        }, 500); 
+    }
+
+    // --- FUNCIONES MANTENIMIENTO Y ASIGNACIONES (RESTAURADAS) ---
+    function renderCajasTable() {
+        const tbody = document.getElementById('cajas-table-body');
+        if (!tbody) return;
+        tbody.innerHTML = '';
+        MOCK_CAJAS.forEach(c => {
+            tbody.insertAdjacentHTML('beforeend', `
+                <tr class="hover:bg-gray-50 transition-colors">
+                    <td class="p-4 text-sm font-bold text-gray-700">#${c.id}</td>
+                    <td class="p-4 text-sm font-mono text-gray-600">${c.codigo}</td>
+                    <td class="p-4 text-sm font-medium text-gray-800">${c.descripcion}</td>
+                    <td class="p-4 text-sm text-gray-600">${c.tipo}</td>
+                    <td class="p-4 text-sm text-gray-600">${c.moneda}</td>
+                    <td class="p-4 text-sm text-right font-mono text-gray-700">${c.minApertura.toLocaleString('es-PY')}</td>
+                    <td class="p-4 text-sm text-gray-600">${c.sucursal}</td>
+                    <td class="p-4 text-center">
+                        <span class="px-3 py-1 text-xs font-bold rounded-full ${c.estado === 'Activo' ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'}">
+                            ${c.estado}
+                        </span>
+                    </td>
+                    <td class="p-4 text-center">
+                        <button onclick="editCaja(${c.id})" class="text-blue-600 hover:text-blue-800">Editar</button>
+                    </td>
+                </tr>
+            `);
+        });
+    }
+
+    function showCajasForm() {
+        document.getElementById('mant-cajas-view').classList.remove('active');
+        document.getElementById('mant-cajas-view').classList.add('hidden-section');
+        document.getElementById('mant-cajas-form-view').classList.remove('hidden-section');
+        document.getElementById('mant-cajas-form-view').classList.add('active');
+        // Reset fields logic omitted for brevity
+    }
+    
+    function cancelCaja() {
+        document.getElementById('mant-cajas-form-view').classList.remove('active');
+        document.getElementById('mant-cajas-form-view').classList.add('hidden-section');
+        document.getElementById('mant-cajas-view').classList.remove('hidden-section');
+        document.getElementById('mant-cajas-view').classList.add('active');
+    }
+    
+    function saveCaja() { alert("Caja Guardada"); cancelCaja(); }
+    
+    function renderAssignmentsTable() {
+        const tbody = document.getElementById('assign-table-body');
+        if(!tbody) return;
+        tbody.innerHTML = '';
+        MOCK_ASSIGNMENTS.forEach(a => {
+            tbody.insertAdjacentHTML('beforeend', `
+                <tr class="hover:bg-gray-50 transition-colors">
+                    <td class="p-4 text-sm font-bold text-gray-700">#${a.id}</td>
+                    <td class="p-4 text-sm text-gray-600">${a.sucursal}</td>
+                    <td class="p-4 text-sm text-gray-600">${a.agencia}</td>
+                    <td class="p-4 text-sm font-medium text-gray-800">${a.caja}</td>
+                    <td class="p-4 text-sm font-medium text-gray-800">${a.cajero}</td>
+                    <td class="p-4 text-center"><span class="px-2 py-1 bg-green-100 text-green-800 text-xs rounded">${a.estado}</span></td>
+                    <td class="p-4 text-center"><button class="text-blue-600 hover:underline">Editar</button></td>
+                </tr>
+            `);
+        });
+    }
+    
+    function showAssignForm() {
+         document.getElementById('assign-cajas-view').classList.remove('active');
+         document.getElementById('assign-cajas-view').classList.add('hidden-section');
+         document.getElementById('assign-cajas-form-view').classList.remove('hidden-section');
+         document.getElementById('assign-cajas-form-view').classList.add('active');
+         populateAssignFormSelects();
+    }
+    
+    function cancelAssign() {
+         document.getElementById('assign-cajas-form-view').classList.remove('active');
+         document.getElementById('assign-cajas-form-view').classList.add('hidden-section');
+         document.getElementById('assign-cajas-view').classList.remove('hidden-section');
+         document.getElementById('assign-cajas-view').classList.add('active');
+    }
+    
+    function saveAssignment() { alert("Asignación Guardada"); cancelAssign(); }
+    
+    function populateAssignFormSelects() {
+        const cajaSelect = document.getElementById('assign-caja-select');
+        cajaSelect.innerHTML = '<option value="">-- Seleccione Caja --</option>';
+        MOCK_CAJAS.forEach(c => {
+            const opt = document.createElement('option');
+            opt.value = c.id; opt.textContent = `${c.codigo} - ${c.descripcion}`;
+            cajaSelect.appendChild(opt);
+        });
+    }
+
+    // --- FUNCIONES TESORERIA & REPORTES (RESTAURADAS) ---
+    function renderTesoreriaTable() {
+        const tbody = document.getElementById('tesoreria-table-body');
+        tbody.innerHTML = '';
+        LIVE_CAJAS_STATUS.forEach(c => {
+             const statusClass = c.estado === 'Abierta' ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800';
+             tbody.insertAdjacentHTML('beforeend', `
+                <tr class="hover:bg-gray-50 border-b">
+                    <td class="p-4 font-bold text-gray-700">${c.desc}</td>
+                    <td class="p-4 text-sm text-gray-600">${c.cajero}</td>
+                    <td class="p-4 text-center"><span class="px-2 py-1 rounded text-xs font-bold ${statusClass}">${c.estado}</span></td>
+                    <td class="p-4 text-right font-mono">${formatCurrency(c.saldo)}</td>
+                    <td class="p-4 text-center"><button onclick="alert('Acción de tesorería')" class="text-gray-500 hover:text-gray-700">Ver</button></td>
+                </tr>
+            `);
+        });
+    }
+
+    function loadReports() {
+        const tbody = document.getElementById('transaction-history-body'); 
+        if(!tbody) return;
+        tbody.innerHTML = '';
+        let tIng=0, tEgr=0;
+        
+        MOCK_TRANSACTIONS.forEach(t => {
+            if(t.type==='Ingreso') tIng+=t.amount; else tEgr+=t.amount;
+            const color = t.type === 'Ingreso' ? 'text-green-600' : 'text-orange-600';
+            tbody.insertAdjacentHTML('beforeend', `<tr class="hover:bg-gray-50 border-b"><td class="p-3">${t.date}</td><td class="p-3 font-bold ${color}">${t.type}</td><td class="p-3">${t.member}</td><td class="p-3 text-gray-500">${t.concept}</td><td class="p-3 text-center text-xs">${t.method}</td><td class="p-3 text-right font-medium">${formatCurrency(t.amount)}</td></tr>`);
+        });
+
+        document.getElementById('kpi-ingresos').textContent = formatCurrency(tIng);
+        document.getElementById('kpi-egresos').textContent = formatCurrency(tEgr);
+        document.getElementById('kpi-neto').textContent = formatCurrency(tIng - tEgr);
+    }
+    
+    function filterObligations() {
+        const tbody = document.getElementById('query-results-body');
+        tbody.innerHTML = '<tr><td colspan="5" class="p-4 text-center text-gray-500">Resultados simulados...</td></tr>';
+    }
+
+    // --- FUNCIONES CORE EXISTENTES ---
+    function formatCurrency(n) { return n.toLocaleString('es-PY', { style: 'currency', currency: 'PYG', minimumFractionDigits: 0 }); }
+
+    function searchMember() {
+        const id = document.getElementById('member-search-input').value.trim();
+        const data = MOCK_MEMBER_BALANCES[id];
+        const info = document.getElementById('member-info');
+        const balances = document.getElementById('balances-container');
+        const placeholder = document.getElementById('balances-placeholder');
+        
+        if(data) {
+            info.classList.remove('hidden');
+            document.getElementById('member-name').textContent = data.name;
+            document.getElementById('member-id').textContent = "Socio N°: " + data.id;
+            
+            // Populate Consolidated Position
+            document.getElementById('bal-ahorro').textContent = formatCurrency(data.saldoAhorro);
+            document.getElementById('bal-aporte').textContent = formatCurrency(data.saldoAporte);
+            document.getElementById('bal-credito').textContent = formatCurrency(data.capitalVencido); // Simplified
+            document.getElementById('bal-tarjeta').textContent = formatCurrency(data.saldoTarjeta);
+            
+            balances.classList.remove('hidden');
+            placeholder.classList.add('hidden');
+            
+            loadObligationsTable(); 
+        } else {
+            info.classList.add('hidden');
+            balances.classList.add('hidden');
+            placeholder.classList.remove('hidden');
+            alert("Socio no encontrado (Use 1001)");
+        }
+    }
+
+    function loadObligationsTable() {
+        const tbody = document.getElementById('obligation-table-body');
+        tbody.innerHTML = '';
+        const id = document.getElementById('member-search-input').value.trim();
+        const obs = (MOCK_MEMBER_OBLIGATIONS[id] || []); 
+        
+        // Filter by Current Tab
+        const filteredObs = obs.filter(ob => {
+            if (currentCajaTab === 'aportes' && ob.type === 'aportes') return true;
+            if (currentCajaTab === 'creditos' && ob.type === 'creditos') return true;
+            if (currentCajaTab === 'tarjetas' && ob.type === 'tarjetas') return true;
+            if (currentCajaTab === 'ahorros' && ob.type === 'ahorros') return true;
+            return false;
+        });
+        
+        if (filteredObs.length === 0 && currentCajaTab !== 'depositos' && currentCajaTab !== 'servicios') {
+             tbody.innerHTML = '<tr><td colspan="6" class="p-4 text-center text-gray-400 text-sm">No hay obligaciones pendientes en este concepto.</td></tr>';
+             return;
+        }
+
+        filteredObs.forEach(ob => {
+             tbody.insertAdjacentHTML('beforeend', `
+                <tr class="hover:bg-gray-50">
+                    <td class="p-3"><input type="checkbox" onchange="toggleTotal(this, ${ob.total})" class="w-4 h-4 text-yoayu-green rounded"></td>
+                    <td class="p-3 font-medium text-gray-700">${ob.concept} ${ob.future ? '<span class="text-[10px] bg-blue-100 text-blue-800 px-1 rounded">Adelanto</span>' : ''}</td>
+                    <td class="p-3 text-gray-500">${ob.date}</td>
+                    <td class="p-3 text-right">${formatCurrency(ob.amount)}</td>
+                    <td class="p-3 text-right text-red-500">${formatCurrency(ob.mora)}</td>
+                    <td class="p-3 text-right font-bold text-gray-800">${formatCurrency(ob.total)}</td>
+                </tr>`);
+        });
+    }
+
+    function toggleTotal(cb, amount) {
+        if(cb.checked) currentTotal += amount;
+        else currentTotal -= amount;
+        document.getElementById('total-payment').textContent = formatCurrency(currentTotal);
+        calculateChange();
+    }
+
+    function calculateChange() {
+        // Simple mock calc
+        let paid = currentTotal; // Auto-match for simplicity unless manually overridden
+        document.getElementById('total-received-amount').textContent = formatCurrency(paid);
+        document.getElementById('change-amount').textContent = '0 Gs';
+        document.getElementById('process-payment-btn').disabled = (currentTotal === 0);
+    }
+    
+    function addPaymentMethod() { /* Logic exists in prev version */ }
+    function processPayment() { 
+        alert("Pago Procesado Correctamente"); 
+        currentTotal = 0; 
+        document.getElementById('total-payment').textContent = '0 Gs';
+        document.getElementById('obligation-table-body').innerHTML = '';
+        document.getElementById('member-info').classList.add('hidden');
+        document.getElementById('member-search-input').value = '';
+    }
+    
+    function setActiveTab(btn) {
+        currentCajaTab = btn.dataset.tab;
+        
+        document.querySelectorAll('button[data-tab]').forEach(b => {
+            b.classList.remove('text-yoayu-green', 'border-yoayu-green');
+            b.classList.add('text-gray-500', 'border-transparent');
+        });
+        btn.classList.add('text-yoayu-green', 'border-yoayu-green');
+        btn.classList.remove('text-gray-500', 'border-transparent');
+        
+        // Hide all custom forms first
+        document.getElementById('deposito-form').classList.add('hidden');
+        document.getElementById('servicios-form').classList.add('hidden');
+        
+        // Logic
+        if(currentCajaTab === 'depositos') {
+             document.getElementById('deposito-form').classList.remove('hidden');
+             document.getElementById('obligation-table-body').innerHTML = '<tr><td colspan="6" class="p-4 text-center text-gray-400">Agregue un depósito arriba.</td></tr>';
+        } else if (currentCajaTab === 'servicios') {
+             document.getElementById('servicios-form').classList.remove('hidden');
+             document.getElementById('obligation-table-body').innerHTML = '<tr><td colspan="6" class="p-4 text-center text-gray-400">Seleccione un servicio.</td></tr>';
+        } else {
+             loadObligationsTable();
+        }
+    }
+    
+    function addDepositoLine() {
+        const type = document.getElementById('dep-cuenta').value;
+        const monto = parseInt(document.getElementById('dep-monto').value) || 0;
+        if(monto > 0) {
+             const tbody = document.getElementById('obligation-table-body');
+             if(tbody.querySelector('tr td.text-gray-400')) tbody.innerHTML = ''; // clear msg
+             
+             tbody.insertAdjacentHTML('afterbegin', `
+                <tr class="bg-blue-50">
+                    <td class="p-3"><input type="checkbox" checked onchange="toggleTotal(this, ${monto})" class="w-4 h-4 text-yoayu-green rounded"></td>
+                    <td class="p-3 font-bold text-blue-800">DEPÓSITO: ${type}</td>
+                    <td class="p-3 text-gray-500">HOY</td>
+                    <td class="p-3 text-right">${formatCurrency(monto)}</td>
+                    <td class="p-3 text-right">-</td>
+                    <td class="p-3 text-right font-bold text-gray-800">${formatCurrency(monto)}</td>
+                </tr>
+             `);
+             currentTotal += monto;
+             document.getElementById('total-payment').textContent = formatCurrency(currentTotal);
+             calculateChange();
+             document.getElementById('dep-monto').value = '';
+        }
+    }
+    
+    function addServicioLine() {
+        const monto = parseInt(document.getElementById('serv-monto').value) || 0;
+        if(monto > 0) {
+             const tbody = document.getElementById('obligation-table-body');
+             if(tbody.querySelector('tr td.text-gray-400')) tbody.innerHTML = '';
+             
+             tbody.insertAdjacentHTML('afterbegin', `
+                <tr class="bg-orange-50">
+                    <td class="p-3"><input type="checkbox" checked onchange="toggleTotal(this, ${monto})" class="w-4 h-4 text-yoayu-green rounded"></td>
+                    <td class="p-3 font-bold text-orange-800">SERVICIO: ANDE</td>
+                    <td class="p-3 text-gray-500">Venc. 10/11</td>
+                    <td class="p-3 text-right">${formatCurrency(monto)}</td>
+                    <td class="p-3 text-right">-</td>
+                    <td class="p-3 text-right font-bold text-gray-800">${formatCurrency(monto)}</td>
+                </tr>
+             `);
+             currentTotal += monto;
+             document.getElementById('total-payment').textContent = formatCurrency(currentTotal);
+             calculateChange();
+        }
+    }
+
+    function toggleAdelantos() {
+        alert("Filtro de adelantos cambiado (Simulación)");
+        loadObligationsTable();
+    }
+    
+    function realizarApertura() { alert("Caja Abierta"); }
+    function confirmarCierre() { alert("Caja Cerrada Exitosamente"); }
+
+    // --- NUEVO: FUNCIONES ARQUEO ---
+    function calculateBilletaje() {
+        let total = 0;
+        document.querySelectorAll('.billetaje-input').forEach(input => {
+            const val = parseInt(input.value) || 0;
+            const denom = parseInt(input.dataset.val);
+            const sub = val * denom;
+            total += sub;
+            input.parentElement.nextElementSibling.textContent = formatCurrency(sub);
+        });
+        
+        document.getElementById('total-efectivo-display').textContent = formatCurrency(total);
+        document.getElementById('resumen-efectivo').textContent = formatCurrency(total);
+        document.getElementById('total-arqueo-final').textContent = formatCurrency(total);
+        
+        // Simulado: Diferencia contra 5.000.000
+        const diff = total - 5000000;
+        const diffEl = document.getElementById('arqueo-diff');
+        diffEl.textContent = formatCurrency(diff);
+        diffEl.className = diff >= 0 ? "font-bold text-xl text-green-600" : "font-bold text-xl text-red-500";
+    }
+
+    // --- NUEVO: FUNCIONES PESTAÑAS CIERRE ---
+    function setCierreTab(tabName) {
+        // 1. Hide all contents
+        document.querySelectorAll('.cierre-tab-content').forEach(el => el.classList.add('hidden'));
+        // 2. Show selected content
+        document.getElementById(`cierre-tab-${tabName}`).classList.remove('hidden');
+
+        // 3. Update buttons
+        document.querySelectorAll('button[data-cierre-tab]').forEach(btn => {
+             if (btn.dataset.cierreTab === tabName) {
+                 btn.className = "px-4 py-2 text-sm font-bold rounded shadow bg-white text-gray-800 transition-all";
+             } else {
+                 btn.className = "px-4 py-2 text-sm font-bold rounded text-gray-600 hover:bg-gray-100 transition-all";
+             }
+        });
+
+        // 4. Special Logic if 'egresos' tab is clicked
+        if (tabName === 'egresos') {
+            renderCierreEgresos();
+        }
+    }
+
+    function renderCierreEgresos() {
+        const tbody = document.getElementById('cierre-egresos-body');
+        tbody.innerHTML = '';
+        let totalEgresos = 0;
+
+        // Filter mock transactions for 'Egreso'
+        const egresos = MOCK_TRANSACTIONS.filter(t => t.type === 'Egreso');
+        
+        if (egresos.length === 0) {
+            tbody.innerHTML = '<tr class="text-center text-gray-400"><td colspan="5" class="p-4">No hay egresos registrados.</td></tr>';
+        } else {
+            egresos.forEach(e => {
+                totalEgresos += e.amount;
+                // Parse date just for time for demo, or show full date
+                tbody.insertAdjacentHTML('beforeend', `
+                    <tr class="hover:bg-gray-50 border-b">
+                         <td class="p-3 text-gray-500 text-xs">${e.date.split(' ')[1] || e.date}</td>
+                         <td class="p-3 font-bold text-gray-700 text-xs">${e.member}</td>
+                         <td class="p-3 text-gray-600 text-xs">${e.concept}</td>
+                         <td class="p-3 text-center text-xs bg-gray-100 rounded">${e.method}</td>
+                         <td class="p-3 text-right font-bold text-orange-600">${formatCurrency(e.amount)}</td>
+                    </tr>
+                `);
+            });
+        }
+        document.getElementById('cierre-total-egresos').textContent = formatCurrency(totalEgresos);
+    }
+</script>
+</body>
+</html>
