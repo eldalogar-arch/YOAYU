@@ -1,0 +1,1976 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Yoayu - Sistema de Gestión Cooperativa</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        'yoayu-green': '#006847', /* Verde Institucional Yoayu */
+                        'yoayu-dark': '#004d35',
+                        'yoayu-light': '#e6f0ed',
+                        'apex-header': '#f2f2f2',
+                        'apex-border': '#dce1e5',
+                        'success-green': '#059669', // Verde para botones de éxito
+                    },
+                    fontFamily: { sans: ['Segoe UI', 'Inter', 'system-ui', 'sans-serif'] }
+                }
+            }
+        }
+    </script>
+    <style>
+        body { background-color: #f0f2f5; font-family: 'Segoe UI', 'Inter', sans-serif; color: #1f2937; }
+        
+        /* Estilos tipo Oracle APEX Universal Theme */
+        .sidebar { background-color: #006847; background-image: linear-gradient(180deg, #006847 0%, #004d35 100%); }
+        .nav-item { border-radius: 4px; color: rgba(255,255,255,0.9); }
+        .nav-item:hover { background-color: rgba(255,255,255,0.1); color: white; }
+        .nav-item.active-link { background-color: rgba(255,255,255,0.2); border-left: 4px solid #FFC300; font-weight: 600; }
+        
+        .card { background: white; border: 1px solid #dce1e5; border-radius: 4px; box-shadow: 0 1px 2px rgba(0,0,0,0.05); }
+        .card-header { background-color: transparent; border-bottom: 1px solid #dce1e5; padding: 12px 16px; font-weight: 600; color: #333; font-size: 1rem; }
+        
+        /* Inputs estilo APEX */
+        input, select, textarea { border: 1px solid #dfdfdf; border-radius: 2px; transition: border-color 0.2s, box-shadow 0.2s; font-size: 0.875rem; height: 2.5rem; padding: 0.25rem 0.5rem; }
+        input:focus, select:focus, textarea:focus { border-color: #006847; outline: none; box-shadow: 0 0 0 1px rgba(0, 104, 71, 0.2); }
+        label { color: #555; font-weight: 600; font-size: 0.75rem; margin-bottom: 0.25rem; display: block; }
+        .required-asterisk { color: #dc2626; margin-left: 2px; }
+
+        .btn-apex-primary { background-color: #006847; color: white; border-radius: 2px; font-weight: 500; transition: background-color 0.2s; box-shadow: 0 1px 2px rgba(0,0,0,0.1); display: inline-flex; align-items: center; justify-content: center; height: 2.5rem; padding: 0 1rem; }
+        .btn-apex-primary:hover { background-color: #005a3e; }
+        
+        .btn-apex-success { background-color: #10b981; color: white; border-radius: 2px; font-weight: 600; transition: background-color 0.2s; box-shadow: 0 1px 2px rgba(0,0,0,0.1); height: 2.5rem; padding: 0 1.5rem; }
+        .btn-apex-success:hover { background-color: #059669; }
+
+        .btn-apex-danger { background-color: #ef4444; color: white; border-radius: 2px; font-weight: 600; height: 2.5rem; padding: 0 1rem; }
+        .btn-apex-danger:hover { background-color: #dc2626; }
+
+        .view-content:not(.active) { display: none; }
+        .hidden-section { display: none; }
+
+        /* Breadcrumbs */
+        .breadcrumb { font-size: 0.75rem; color: #0066cc; margin-bottom: 0.5rem; }
+        .breadcrumb span { color: #666; }
+
+        /* Modal Backdrop */
+        .modal-backdrop { background-color: rgba(0, 0, 0, 0.5); z-index: 50; }
+
+        /* Scrollbars */
+        ::-webkit-scrollbar { width: 8px; height: 8px; background-color: transparent; }
+        ::-webkit-scrollbar-thumb { background: #c1c1c1; border-radius: 10px; }
+        ::-webkit-scrollbar-thumb:hover { background: #a8a8a8; }
+        html { scrollbar-width: thin; scrollbar-color: #c1c1c1 transparent; }
+    </style>
+</head>
+<body>
+
+<div class="flex h-screen overflow-hidden">
+
+    <!-- Sidebar Estilo APEX -->
+    <div class="sidebar w-64 flex-shrink-0 flex flex-col justify-between hidden md:flex shadow-xl z-20">
+        <div class="p-4">
+            <!-- Logo Area -->
+            <div class="flex items-center justify-center mb-8 p-2 bg-white/10 rounded">
+                <img src="image_0c3875.png" alt="Yoayu Logo" class="h-12 w-auto object-contain" onerror="this.style.display='none'; this.nextElementSibling.style.display='block'">
+                <h1 class="text-2xl font-bold text-white hidden ml-2 tracking-wide" style="display:none">YOAYU</h1>
+            </div>
+
+            <nav class="space-y-1 text-sm overflow-y-auto max-h-[calc(100vh-200px)]">
+                <a href="#" class="nav-item flex items-center px-3 py-3 transition duration-150 active-link" data-view="dashboard" onclick="switchView('dashboard')">
+                    <svg class="w-5 h-5 mr-3 opacity-80" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2V6zM14 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V6zM4 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2v-2zM14 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z"></path></svg>
+                    Panel Principal
+                </a>
+                
+                <div class="pt-4 pb-1 pl-3 text-xs uppercase text-green-200/60 font-bold tracking-wider">Operaciones de Caja</div>
+                <a href="#" class="nav-item flex items-center px-3 py-3 transition duration-150" data-view="apertura" onclick="switchView('apertura')">
+                    <svg class="w-5 h-5 mr-3 opacity-80" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"></path></svg>
+                    Apertura de Caja
+                </a>
+                <a href="#" class="nav-item flex items-center px-3 py-3 transition duration-150" data-view="caja" onclick="switchView('caja')">
+                    <svg class="w-5 h-5 mr-3 opacity-80" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 9V7a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2m2 4h10a2 2 0 002-2v-6a2 2 0 00-2-2H9a2 2 0 00-2 2v6a2 2 0 002 2zm7-5a2 2 0 11-4 0 2 2 0 014 0z"></path></svg>
+                    Movimientos (Caja)
+                </a>
+                
+                <div class="pt-4 pb-1 pl-3 text-xs uppercase text-green-200/60 font-bold tracking-wider">Gestión Operativa</div>
+                <a href="#" class="nav-item flex items-center px-3 py-3 transition duration-150" data-view="ordenes-pago" onclick="switchView('ordenes-pago')">
+                    <svg class="w-5 h-5 mr-3 opacity-80" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path></svg>
+                    Órdenes de Pago
+                </a>
+                <a href="#" class="nav-item flex items-center px-3 py-3 transition duration-150" data-view="facturas" onclick="switchView('facturas')">
+                    <svg class="w-5 h-5 mr-3 opacity-80" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path></svg>
+                    Recepción de Facturas
+                </a>
+
+                <div class="pt-4 pb-1 pl-3 text-xs uppercase text-green-200/60 font-bold tracking-wider">Consultas</div>
+                <a href="#" class="nav-item flex items-center px-3 py-3 transition duration-150" data-view="reportes" onclick="switchView('reportes')">
+                    <svg class="w-5 h-5 mr-3 opacity-80" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 8v8m-4-5v5m-4-2v2m-2 4h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v10a2 2 0 002 2z"></path></svg>
+                    Reportes y Resumen
+                </a>
+            </nav>
+        </div>
+        <div class="p-4 bg-yoayu-dark/30 border-t border-yoayu-dark/50">
+            <div class="flex items-center">
+                <div class="w-2 h-2 rounded-full bg-green-400 mr-2 shadow-[0_0_5px_rgba(74,222,128,0.8)]" id="status-indicator-sidebar"></div>
+                <span id="status-text-sidebar" class="text-xs text-green-100 font-medium">Caja Abierta</span>
+            </div>
+            <div class="text-xs text-green-200/70 mt-1">Caja: 01 | Cajero: JP</div>
+        </div>
+    </div>
+
+    <!-- Contenido Principal -->
+    <div class="flex-1 flex flex-col h-screen overflow-hidden bg-[#f2f2f2]">
+        <!-- Header Universal APEX -->
+        <header class="bg-white shadow-sm h-14 flex items-center justify-between px-6 z-10 border-b border-gray-200">
+            <h2 id="page-title" class="text-lg font-bold text-gray-700 tracking-tight">Panel Principal</h2>
+            <div class="flex items-center space-x-4">
+                <div class="text-right hidden md:block leading-tight">
+                    <p class="text-xs font-bold text-gray-600 uppercase" id="header-date">--</p>
+                </div>
+                <div class="w-8 h-8 bg-yoayu-green text-white rounded-full flex items-center justify-center font-bold text-xs shadow-sm">JP</div>
+            </div>
+        </header>
+
+        <main class="flex-1 overflow-y-auto p-4 md:p-6 space-y-6">
+            
+            <!-- DASHBOARD (Resumido) -->
+            <section id="dashboard-view" class="view-content active">
+                <div class="card p-6 border-l-4 border-l-green-500 mb-6">
+                    <h3 class="text-base font-bold text-gray-700">Bienvenido, Juan Perez</h3>
+                    <p class="text-sm text-gray-500">Sistema Integral Yoayu</p>
+                </div>
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+                    <div onclick="switchView('ordenes-pago')" class="card p-6 cursor-pointer hover:shadow-md transition-shadow border-t-4 border-t-yoayu-green flex flex-col items-center text-center justify-center h-40">
+                        <div class="bg-green-50 p-3 rounded-full mb-3 text-yoayu-green">
+                            <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path></svg>
+                        </div>
+                        <h4 class="font-bold text-sm text-gray-700">Órdenes de Pago</h4>
+                        <p class="text-xs text-gray-500 mt-1">Gestión de Proveedores y Pagos</p>
+                    </div>
+                </div>
+            </section>
+
+            <!-- =================================================================================== -->
+            <!-- MÓDULO: LISTADO ÓRDENES DE PAGO -->
+            <!-- =================================================================================== -->
+            <section id="ordenes-pago-view" class="view-content hidden-section">
+                <div class="mb-4 breadcrumb flex items-center text-gray-500 text-xs uppercase tracking-wide">
+                    <span>Inicio</span>
+                    <svg class="w-3 h-3 mx-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path></svg>
+                    <span>Gestión Operativa</span>
+                    <svg class="w-3 h-3 mx-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path></svg>
+                    <span class="text-yoayu-green font-bold">Órdenes de Pago</span>
+                </div>
+
+                <div class="card overflow-hidden shadow-lg border-0 rounded-lg">
+                    <div class="bg-white p-6 border-b flex flex-col md:flex-row justify-between items-center gap-4">
+                        <h3 class="text-xl font-bold text-gray-700 flex items-center">
+                            <span class="w-2 h-8 bg-yoayu-green rounded-full mr-3"></span>
+                            Gestión de Órdenes de Pago
+                        </h3>
+                        <div class="flex gap-3">
+                            <button onclick="printDailyReport()" class="btn-apex-primary bg-white text-gray-700 border border-gray-300 hover:bg-gray-50 flex items-center shadow-sm">
+                                <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 17v-2m3 2v-4m3 4v-6m2 10H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path></svg>
+                                Imprimir Reporte Diario
+                            </button>
+                            <button onclick="showOrdenPagoForm()" class="btn-apex-success bg-[#00aa00] hover:bg-[#008800] shadow-md hover:shadow-lg transform transition hover:-translate-y-0.5 px-6 py-2.5 rounded-full flex items-center">
+                                <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path></svg>
+                                Ingresar Orden de Pago
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- Filtros -->
+                    <div class="p-6 bg-gray-50 border-b">
+                        <div class="grid grid-cols-1 md:grid-cols-5 gap-4 items-end">
+                            <div class="md:col-span-2">
+                                <label class="text-xs uppercase font-bold text-gray-400 mb-2">Buscar Proveedor / N° Orden</label>
+                                <div class="relative">
+                                    <input type="text" id="op-search" class="w-full pl-10 h-10 border-gray-300 rounded focus:ring-2 focus:ring-yoayu-green" placeholder="Ej: Office ...">
+                                    <svg class="w-5 h-5 text-gray-400 absolute left-3 top-2.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path></svg>
+                                </div>
+                            </div>
+                            <div>
+                                <label class="text-xs uppercase font-bold text-gray-400 mb-2">Estado</label>
+                                <select id="op-filter-status" class="w-full h-10 border-gray-300 rounded text-sm">
+                                    <option value="">Todos</option>
+                                    <option value="Registrada">Registrada</option>
+                                    <option value="Pendiente">Pendiente</option>
+                                    <option value="Autorizada">Autorizada</option>
+                                    <option value="Impresa">Impresa</option>
+                                    <option value="Anulada">Anulada</option>
+                                </select>
+                            </div>
+                             <div>
+                                <label class="text-xs uppercase font-bold text-gray-400 mb-2">Fecha</label>
+                                <input type="date" id="op-filter-date" class="w-full h-10 border-gray-300 rounded text-sm">
+                            </div>
+                            <div>
+                                <button onclick="renderPaymentOrders()" class="h-10 px-6 bg-yoayu-dark text-white rounded hover:bg-yoayu-green font-medium transition-colors w-full shadow-sm">Filtrar</button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Grid -->
+                    <div class="overflow-x-auto">
+                        <table class="w-full text-left border-collapse">
+                            <thead>
+                                <tr class="bg-white border-b border-gray-100">
+                                    <th class="p-4 text-xs font-bold text-gray-400 uppercase tracking-wider">Fecha</th>
+                                    <th class="p-4 text-xs font-bold text-gray-400 uppercase tracking-wider">N° Orden</th>
+                                    <th class="p-4 text-xs font-bold text-gray-400 uppercase tracking-wider text-center">Tipo</th>
+                                    <th class="p-4 text-xs font-bold text-gray-400 uppercase tracking-wider">Beneficiario / Concepto</th>
+                                    <th class="p-4 text-xs font-bold text-gray-400 uppercase tracking-wider">Medio Pago</th>
+                                    <th class="p-4 text-xs font-bold text-gray-400 uppercase tracking-wider text-right">Monto Total</th>
+                                    <th class="p-4 text-xs font-bold text-gray-400 uppercase tracking-wider text-center">Estado</th>
+                                    <th class="p-4 text-xs font-bold text-gray-400 uppercase tracking-wider">Usuario</th>
+                                    <th class="p-4 text-xs font-bold text-gray-400 uppercase tracking-wider text-center">Acciones</th>
+                                </tr>
+                            </thead>
+                            <tbody id="op-table-body" class="divide-y divide-gray-50 text-sm">
+                                <!-- Populated by JS -->
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </section>
+
+            <!-- =================================================================================== -->
+            <!-- MÓDULO: FORMULARIO ALTA/EDICIÓN ORDEN DE PAGO -->
+            <!-- =================================================================================== -->
+            <section id="ordenes-pago-form-view" class="view-content hidden-section">
+                <input type="hidden" id="op-edit-id">
+                
+                <div class="mb-4 breadcrumb flex items-center text-gray-500 text-xs uppercase tracking-wide">
+                    <span>Inicio</span>
+                    <svg class="w-3 h-3 mx-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path></svg>
+                    <span>Órdenes de Pago</span>
+                    <svg class="w-3 h-3 mx-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path></svg>
+                    <span class="text-yoayu-green font-bold" id="form-op-breadcrumb">Nueva Orden</span>
+                </div>
+
+                <div class="bg-white p-5 border-l-4 border-l-yoayu-green rounded shadow-sm mb-6 flex flex-col justify-center">
+                    <label class="text-xs font-bold text-gray-500 uppercase tracking-wide mb-1">Tipo de Orden de Pago</label>
+                    <div class="flex items-center gap-4 mt-1">
+                        <select id="op-tipo-orden" onchange="updateFormType()" class="w-80 h-10 text-xs font-bold text-gray-800 border-gray-300 rounded focus:ring-yoayu-green focus:border-yoayu-green">
+                            <option value="PROVEEDORES">PROVEEDORES</option>
+                            <option value="DEVOLUCION A SOCIOS">DEVOLUCION A SOCIOS RENUNCIANTES O FALLECIDOS</option>
+                            <option value="REPOSICION DE CAJA MATRIZ">REPOSICION DE CAJA MATRIZ</option>
+                            <option value="REPOSICION DE CAJA ( INTERIOR )">REPOSICION DE CAJA ( INTERIOR )</option>
+                        </select>
+                        <span class="text-xs text-gray-400 italic">* El flujo de trabajo y estados cambiarán según el tipo seleccionado.</span>
+                    </div>
+                </div>
+
+                <!-- CONTENEDOR PRINCIPAL: ESTRUCTURA VERTICAL -->
+                <div class="space-y-6">
+                    
+                    <!-- 1. Datos del Proveedor -->
+                    <div class="card p-6 transition-all duration-300" id="panel-proveedor">
+                        <h4 class="text-sm font-bold text-gray-700 mb-4 pb-2 flex justify-between items-center border-b border-gray-100">
+                            <span>1. Datos del Proveedor</span>
+                            <button onclick="openProviderModal()" class="text-xs text-yoayu-green hover:underline flex items-center cursor-pointer"><svg class="w-3 h-3 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path></svg> Registrar / Ver Proveedores</button>
+                        </h4>
+                        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+                            <div class="lg:col-span-1">
+                                <label class="font-normal text-gray-600 text-xs">RUC / Documento <span class="required-asterisk">*</span></label>
+                                <div class="flex mt-1">
+                                    <input type="text" id="prov-ruc-search" class="w-full rounded-r-none border-gray-300 focus:ring-yoayu-green h-9 text-sm" placeholder="Ej: 80012345-1">
+                                    <button onclick="searchProvider()" class="bg-yoayu-green text-white px-3 rounded-r hover:bg-yoayu-dark transition-colors"><svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path></svg></button>
+                                </div>
+                            </div>
+                            <div class="lg:col-span-2">
+                                <label class="font-normal text-gray-600 text-xs">Razón Social</label>
+                                <input type="text" id="prov-name" class="bg-gray-50 border-gray-300 text-gray-700 mt-1 font-bold w-full h-9 text-sm" readonly>
+                            </div>
+                            <div class="lg:col-span-1 pt-6">
+                                <div id="timbrado-status" class="hidden text-xs px-3 h-9 rounded border flex items-center">
+                                    <!-- JS inyectará estado del timbrado -->
+                                </div>
+                            </div>
+                            
+                            <!-- NUEVA ALERTA DE FACTURAS PENDIENTES DE VINCULAR -->
+                            <div id="prov-pending-invoices" class="hidden lg:col-span-4 mt-2 p-4 bg-blue-50 border border-blue-200 rounded flex justify-between items-center shadow-sm">
+                                <div class="flex items-center text-blue-800 text-sm">
+                                    <svg class="w-6 h-6 mr-3 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+                                    <span>Se han detectado <strong id="prov-pending-count" class="text-lg mx-1">0</strong> facturas de este proveedor previamente cargadas en Recepción que <strong>no tienen Orden de Pago</strong>.</span>
+                                </div>
+                                <button type="button" onclick="openFacturasOpModal()" class="bg-blue-600 text-white px-5 py-2.5 rounded text-xs font-bold hover:bg-blue-700 transition-colors shadow-md flex items-center animate-pulse">
+                                    <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101m-.758-4.899a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1"></path></svg>
+                                    Ver y Vincular Factura
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- 1.B Reposición (Oculto por defecto) -->
+                    <div class="card p-6 hidden border-t-2 border-t-blue-500 transition-all duration-300" id="panel-reposicion">
+                        <!-- Estructura de reposición mantenida intacta -->
+                        <h4 class="text-sm font-bold text-gray-700 mb-4 pb-2 border-b border-gray-100 flex justify-between items-center">
+                            <span>1. Datos de Solicitud de Reposición</span>
+                            <span class="text-yoayu-green font-bold text-base bg-green-50 px-3 py-1 rounded border border-green-100 shadow-sm" id="repo-total-header">Total: 0 Gs</span>
+                        </h4>
+                        <div class="mb-5">
+                            <label class="font-normal text-gray-600 text-xs">Motivo / Justificación General <span class="required-asterisk">*</span></label>
+                            <textarea id="repo-motivo" class="w-full mt-1 h-12 text-sm border-gray-300 focus:ring-yoayu-green" placeholder="Detalle..."></textarea>
+                        </div>
+                        <div class="bg-gray-50 p-4 rounded border border-gray-200 mb-4">
+                            <h5 class="text-[11px] font-bold text-gray-500 uppercase tracking-wide mb-3 flex items-center">
+                                <svg class="w-4 h-4 mr-1 text-blue-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"></path></svg>
+                                Agregar Caja a la Solicitud
+                            </h5>
+                            <div class="grid grid-cols-1 md:grid-cols-5 gap-3 items-end">
+                                <div><label class="text-[10px] uppercase">Sucursal</label><select id="repo-add-sucursal" class="w-full border-gray-300 text-xs h-9"><option>Casa Matriz</option><option>Agencia 1</option></select></div>
+                                <div><label class="text-[10px] uppercase">Caja N°</label><input type="text" id="repo-add-caja" class="w-full border-gray-300 text-xs h-9"></div>
+                                <div><label class="text-[10px] uppercase">Responsable</label><input type="text" id="repo-add-resp" class="w-full border-gray-300 text-xs h-9"></div>
+                                <div><label class="text-[10px] uppercase">Monto</label><input type="text" id="repo-add-monto" class="w-full border-gray-300 text-xs h-9 text-right font-bold" oninput="formatNumberInput(this)"></div>
+                                <div><button type="button" onclick="addRepoItem()" class="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold h-9 rounded text-xs transition-colors">+ Añadir</button></div>
+                            </div>
+                        </div>
+                        <div class="overflow-hidden border border-gray-200 rounded">
+                            <table class="w-full text-left text-xs"><thead class="bg-gray-100 uppercase"><tr><th class="p-2">Sucursal</th><th class="p-2">Caja</th><th class="p-2">Responsable</th><th class="p-2 text-right">Monto</th><th class="p-2"></th></tr></thead><tbody id="repo-items-body" class="bg-white"></tbody></table>
+                        </div>
+                    </div>
+
+                    <!-- 2. Comprobante y Medio -->
+                    <div class="card p-6 transition-all duration-300" id="panel-comprobante">
+                        <h4 id="title-comprobante" class="text-sm font-bold text-gray-700 mb-4 border-b border-gray-100 pb-2">2. Comprobante y Medio de Pago</h4>
+                        
+                        <div class="grid grid-cols-1 md:grid-cols-12 gap-6">
+                            <!-- Datos Documento -->
+                            <div class="md:col-span-5 space-y-4" id="col-factura">
+                                <div>
+                                    <label class="font-normal text-gray-600 text-xs mb-2">¿Cuenta con Documento de Respaldo? <span class="required-asterisk">*</span></label>
+                                    <div class="flex gap-4 mt-1">
+                                        <label class="inline-flex items-center"><input type="radio" name="has_invoice" value="Si" checked class="text-yoayu-green focus:ring-yoayu-green w-4 h-4" onchange="toggleInvoiceFields(true)"> <span class="ml-2 text-sm text-gray-700">Sí</span></label>
+                                        <label class="inline-flex items-center"><input type="radio" name="has_invoice" value="No" class="text-gray-400 focus:ring-gray-400 w-4 h-4" onchange="toggleInvoiceFields(false)"> <span class="ml-2 text-sm text-gray-700">No / Interna</span></label>
+                                    </div>
+                                </div>
+                                <div id="invoice-fields" class="p-4 bg-blue-50 border border-blue-200 rounded shadow-inner transition-opacity duration-300">
+                                    <label class="font-bold text-blue-800 text-xs block mb-2">Facturas Vinculadas a esta Orden <span class="required-asterisk">*</span></label>
+                                    <div class="flex mt-1 shadow-sm rounded">
+                                        <input type="text" id="op-factura-nro" class="w-full rounded-none rounded-l border-blue-300 focus:ring-blue-500 h-10 text-sm bg-white text-gray-800 font-mono font-bold" readonly placeholder="Ninguna factura seleccionada...">
+                                        <button type="button" id="btn-vincular-fac" onclick="openFacturasOpModal()" class="bg-blue-600 text-white px-4 hover:bg-blue-700 transition-colors flex items-center gap-2 text-xs font-bold whitespace-nowrap disabled:opacity-50 disabled:cursor-not-allowed border-y border-blue-600" title="Buscar Facturas Cargadas">
+                                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101m-.758-4.899a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1"></path></svg>
+                                            Vincular Facturas
+                                        </button>
+                                        <button type="button" id="btn-clear-fac" onclick="clearLinkedInvoices()" class="bg-red-50 text-red-600 px-3 rounded-r hover:bg-red-100 border border-red-200 transition-colors flex items-center gap-1 text-xs font-bold whitespace-nowrap disabled:opacity-50 disabled:cursor-not-allowed" title="Limpiar Facturas Vinculadas">
+                                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path></svg>
+                                        </button>
+                                    </div>
+                                    <p class="text-[10px] text-blue-600 mt-2 font-medium leading-tight">* Al seleccionar "Vincular", los conceptos, montos y cálculo de IVA se auto-completarán en la grilla inferior.</p>
+                                </div>
+                            </div>
+                            
+                            <!-- Medio Pago -->
+                            <div class="md:col-span-7 space-y-4 border-l pl-6" id="col-medio-pago">
+                                <div>
+                                    <label class="font-normal text-gray-600 text-xs">Medio de Pago Propuesto <span class="required-asterisk">*</span></label>
+                                    <select id="op-medio-pago" class="w-full mt-1 border-gray-300 focus:ring-yoayu-green h-9 text-sm" onchange="togglePaymentFields()">
+                                        <option value="Efectivo">Efectivo</option>
+                                        <option value="Cheque">Cheque</option>
+                                        <option value="Transferencia">Transferencia</option>
+                                    </select>
+                                </div>
+                                <div id="check-fields" class="hidden space-y-3 pt-1">
+                                    <div>
+                                        <label class="font-normal text-gray-600 text-[10px] uppercase">Banco / Cuenta</label>
+                                        <select class="w-full border-gray-300 text-xs h-8 rounded"><option>Banco Itaú - Cta Cte 123456</option></select>
+                                    </div>
+                                    <div class="grid grid-cols-2 gap-2">
+                                        <div><label class="font-normal text-gray-600 text-[10px] uppercase">N° Cheque</label><input type="text" id="op-nro-cheque" class="w-full border-gray-300 text-xs h-8 rounded"></div>
+                                        <div><label class="font-normal text-gray-600 text-[10px] uppercase">Fecha</label><input type="date" class="w-full border-gray-300 text-xs h-8 rounded"></div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Adjunto (Ocultado intencionalmente por control interno) -->
+                            <div class="md:col-span-3 border-l pl-6 hidden" id="col-adjunto">
+                                <label class="mb-2 block text-gray-600 text-xs font-normal">Adjuntar Comprobante</label>
+                                <label for="op-invoice-file" class="flex flex-col items-center justify-center w-full h-24 border-2 border-gray-300 border-dashed rounded cursor-pointer bg-gray-50 hover:bg-gray-100 transition-colors relative">
+                                    <div class="flex flex-col items-center justify-center pt-2 pb-2" id="upload-placeholder">
+                                        <svg class="w-5 h-5 mb-1 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"></path></svg>
+                                        <p class="text-[10px] text-gray-500">Click para subir</p>
+                                    </div>
+                                    <div id="upload-preview" class="hidden absolute inset-0 w-full h-full bg-white rounded flex items-center justify-center p-1">
+                                        <div id="preview-content" class="flex flex-col items-center w-full h-full justify-center"></div>
+                                        <button type="button" onclick="removeInvoiceFile(event)" class="absolute -top-2 -right-2 bg-white rounded-full p-1 shadow-md text-red-500 hover:text-red-700 z-10 border border-gray-200"><svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg></button>
+                                    </div>
+                                    <input id="op-invoice-file" type="file" class="hidden" accept="image/*,application/pdf" onchange="handleFileSelect(this)" />
+                                </label>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- 3. DETALLE DE CONCEPTOS (NUEVA TABLA) -->
+                    <div class="card p-0 transition-all duration-300 border-gray-300" id="panel-conceptos">
+                        <div class="p-4 border-b border-gray-200 bg-gray-50 flex justify-between items-center rounded-t">
+                            <h4 class="text-sm font-bold text-gray-800 flex items-center">
+                                <svg class="w-4 h-4 mr-2 text-yoayu-green" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"></path></svg>
+                                3. Detalle de Conceptos / Factura
+                            </h4>
+                            <button type="button" id="btn-add-op-concept" onclick="addOpConceptRow()" class="hidden text-xs bg-white border border-gray-300 text-gray-700 hover:bg-gray-100 font-bold px-4 py-2 rounded shadow-sm flex items-center transition-colors">
+                                <svg class="w-4 h-4 mr-1 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"></path></svg>
+                                Agregar Línea
+                            </button>
+                        </div>
+                        <div class="overflow-x-auto">
+                            <table class="w-full text-left text-xs whitespace-nowrap">
+                                <thead class="bg-white text-gray-600 border-b-2 border-gray-200">
+                                    <tr>
+                                        <th class="p-3 font-semibold uppercase tracking-wider border-r border-gray-100" rowspan="2">Cod.</th>
+                                        <th class="p-3 font-semibold uppercase tracking-wider border-r border-gray-100" rowspan="2">Descripción / Concepto</th>
+                                        <th class="p-3 font-semibold uppercase tracking-wider border-r border-gray-100" rowspan="2">Cuenta Contable</th>
+                                        <th class="p-3 font-semibold uppercase tracking-wider border-r border-gray-100 text-center" rowspan="2">Cant.</th>
+                                        <th class="p-3 font-semibold uppercase tracking-wider border-r border-gray-100 text-right" rowspan="2">Precio Unit.</th>
+                                        <th class="p-3 font-semibold uppercase tracking-wider border-r border-gray-200 text-center text-blue-700 bg-blue-50/30" rowspan="2">Tipo IVA</th>
+                                        <th class="p-2 font-semibold uppercase tracking-wider text-center bg-gray-50 border-b border-gray-200" colspan="3">Valor de Venta (Distribución de IVA)</th>
+                                        <th class="p-3 text-center w-10" rowspan="2"></th>
+                                    </tr>
+                                    <tr>
+                                        <th class="p-2 font-semibold text-gray-500 text-right bg-gray-50 border-r border-gray-100 w-28">Exentas</th>
+                                        <th class="p-2 font-semibold text-gray-500 text-right bg-gray-50 border-r border-gray-100 w-28">5%</th>
+                                        <th class="p-2 font-semibold text-gray-800 text-right bg-green-50 w-28">10%</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="op-conceptos-body" class="divide-y divide-gray-100 bg-white">
+                                    <!-- Las filas se inyectan por JS -->
+                                </tbody>
+                            </table>
+                        </div>
+                        <div class="p-3 bg-gray-50 text-[10px] text-gray-500 border-t border-gray-200 rounded-b">
+                            * Seleccione el Tipo de IVA para distribuir el monto automáticamente. Puede editar manualmente las columnas si lo requiere.
+                        </div>
+                    </div>
+
+                    <!-- FOOTER GRID: Autorización y Resumen -->
+                    <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                        <!-- 4. Autorizaciones -->
+                        <div class="card p-6 lg:col-span-2">
+                            <h4 class="text-sm font-bold text-gray-700 mb-4 border-b border-gray-100 pb-2">4. Autorización y Observaciones</h4>
+                            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                                <div>
+                                    <label class="font-normal text-gray-600 text-xs">Nivel de Autorización <span class="required-asterisk">*</span></label>
+                                    <select id="op-auth-level" class="w-full mt-1 border-gray-300 focus:ring-yoayu-green text-sm h-10">
+                                        <option value="">-- Seleccionar --</option>
+                                        <option value="GA">Gerente Administrativo</option>
+                                        <option value="GG">Gerente General</option>
+                                        <option value="CA">Consejo de Administración</option>
+                                    </select>
+                                    
+                                    <div id="status-container" class="hidden mt-4 pt-4 border-t border-gray-100">
+                                        <label class="text-yoayu-green font-bold text-xs mb-1">Actualizar Estado</label>
+                                        <select id="op-status-select" class="w-full font-bold bg-gray-50 border-yoayu-green text-sm h-10 focus:ring-yoayu-green">
+                                            <option value="Registrada">Registrada</option>
+                                            <option value="Pendiente">Pendiente</option>
+                                            <option value="Autorizada">Autorizada</option>
+                                            <option value="Anulada">Anulada</option>
+                                        </select>
+                                    </div>
+                                </div>
+                                <div>
+                                    <label class="font-normal text-gray-600 text-xs">Observaciones Adicionales</label>
+                                    <textarea id="op-obs" class="w-full mt-1 h-24 text-sm border-gray-300 focus:ring-yoayu-green" placeholder="Detalles u observaciones internas..."></textarea>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- 5. Resumen de Liquidación -->
+                        <div class="card p-6 bg-white shadow-md border-t-4 border-t-yoayu-dark">
+                            <h4 class="text-sm font-bold text-gray-800 mb-4 border-b border-gray-100 pb-2 uppercase tracking-wide">Resumen de Liquidación</h4>
+                            
+                            <div class="space-y-2 mb-4 text-sm">
+                                <div class="flex justify-between items-center"><span class="text-gray-500 font-medium">Gravadas 10%</span><span class="font-bold text-gray-700 font-mono" id="summary-grav-10">0</span></div>
+                                <div class="flex justify-between items-center"><span class="text-gray-500 font-medium">Gravadas 5%</span><span class="font-bold text-gray-700 font-mono" id="summary-grav-5">0</span></div>
+                                <div class="flex justify-between items-center"><span class="text-gray-500 font-medium">Exentas</span><span class="font-bold text-gray-700 font-mono" id="summary-exenta">0</span></div>
+                            </div>
+
+                            <!-- NUEVO: SECCIÓN DE LIQUIDACIÓN DE IVA -->
+                            <div class="space-y-2 mb-4 text-sm bg-blue-50/50 p-3 rounded border border-blue-100">
+                                <h5 class="text-[10px] font-bold text-blue-600 uppercase mb-1 border-b border-blue-200 pb-1">Liquidación IVA</h5>
+                                <div class="flex justify-between items-center"><span class="text-gray-500 font-medium">IVA 10%</span><span class="font-bold text-blue-700 font-mono" id="summary-iva-10">0</span></div>
+                                <div class="flex justify-between items-center"><span class="text-gray-500 font-medium">IVA 5%</span><span class="font-bold text-blue-700 font-mono" id="summary-iva-5">0</span></div>
+                                <div class="flex justify-between items-center pt-1 border-t border-blue-200"><span class="text-gray-700 font-bold text-xs uppercase">Total IVA</span><span class="font-bold text-blue-800 font-mono" id="summary-iva-total">0</span></div>
+                            </div>
+                            
+                            <!-- Retenciones -->
+                            <div id="retention-box" class="hidden bg-orange-50 p-3 rounded border border-orange-200 mb-6">
+                                <div class="flex justify-between items-center mb-1">
+                                    <span class="text-xs font-bold text-orange-800">Retención IVA (30%)</span>
+                                    <span class="text-xs font-bold text-orange-800 font-mono" id="op-ret-display">0</span>
+                                </div>
+                                <p class="text-[10px] text-orange-600 leading-tight">Proveedor superó el acumulado mensual de Gs. 5.000.000</p>
+                            </div>
+
+                            <div class="pt-4 border-t-2 border-gray-200">
+                                <div class="mb-6 flex flex-col items-end">
+                                    <span class="text-xs font-bold text-gray-500 uppercase tracking-wider">TOTAL A PAGAR</span>
+                                    <div class="text-3xl font-extrabold text-yoayu-green mt-1 tracking-tight" id="op-total-display">0 Gs</div>
+                                </div>
+                                
+                                <div class="flex flex-col gap-3">
+                                    <button onclick="confirmOrder()" id="btn-confirm-order" class="btn-apex-primary w-full h-12 text-base shadow-md font-bold rounded transition-transform active:scale-95">
+                                        <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path></svg>
+                                        Confirmar Orden
+                                    </button>
+                                    <button onclick="cancelOrder()" class="text-gray-500 text-sm hover:text-gray-800 hover:underline text-center transition-colors py-2">Cancelar y Volver</button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                </div>
+            </section>
+
+            <!-- =================================================================================== -->
+            <!-- MÓDULO: LISTADO Y RECEPCIÓN DE FACTURAS -->
+            <!-- =================================================================================== -->
+            <section id="facturas-view" class="view-content hidden-section">
+                <!-- Se mantiene el módulo de facturas del código anterior -->
+                <div class="mb-4 breadcrumb flex items-center text-gray-500 text-xs uppercase tracking-wide">
+                    <span>Inicio</span>
+                    <svg class="w-3 h-3 mx-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path></svg>
+                    <span>Gestión Operativa</span>
+                    <svg class="w-3 h-3 mx-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path></svg>
+                    <span class="text-yoayu-green font-bold">Carga y Recepción de Facturas</span>
+                </div>
+
+                <div class="card overflow-hidden shadow-lg border-0 rounded-lg">
+                    <div class="bg-white p-6 border-b flex flex-col md:flex-row justify-between items-center gap-4">
+                        <h3 class="text-xl font-bold text-gray-700 flex items-center">
+                            <span class="w-2 h-8 bg-yoayu-green rounded-full mr-3"></span>
+                            Listado de Facturas (Docs. de Respaldo)
+                        </h3>
+                        <!-- AÑADIDO: Botón para cargar nueva factura -->
+                        <button onclick="showFacturaForm()" class="btn-apex-success bg-[#00aa00] hover:bg-[#008800] shadow-md hover:shadow-lg transform transition hover:-translate-y-0.5 px-6 py-2.5 rounded-full flex items-center text-sm">
+                            <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path></svg>
+                            Cargar Factura
+                        </button>
+                    </div>
+                    <div class="p-4 bg-gray-50 border-b flex gap-4">
+                        <div class="flex-1">
+                            <input type="text" id="facturas-search" class="w-full h-10 border-gray-300 rounded focus:ring-2 focus:ring-yoayu-green px-3 text-sm" placeholder="Buscar por Proveedor, N° Factura..." onkeyup="renderFacturas()">
+                        </div>
+                        <select id="facturas-filter-estado" class="w-48 h-10 border-gray-300 rounded text-sm" onchange="renderFacturas()">
+                            <option value="">Todos los Estados</option>
+                            <option value="pendiente">Original Pendiente</option>
+                            <option value="recibido">Original Recibido</option>
+                        </select>
+                    </div>
+                    <div class="overflow-x-auto">
+                        <table class="w-full text-left border-collapse">
+                            <thead><tr class="bg-white border-b border-gray-100"><th class="p-4 text-xs font-bold text-gray-400 uppercase tracking-wider">N° Orden Pago</th><th class="p-4 text-xs font-bold text-gray-400 uppercase tracking-wider">Proveedor</th><th class="p-4 text-xs font-bold text-gray-400 uppercase tracking-wider">N° Factura</th><th class="p-4 text-xs font-bold text-gray-400 uppercase tracking-wider text-right">Monto Total</th><th class="p-4 text-xs font-bold text-gray-400 uppercase tracking-wider text-center">Original Físico</th><th class="p-4 text-xs font-bold text-gray-400 uppercase tracking-wider text-center">Acciones</th></tr></thead>
+                            <tbody id="facturas-table-body" class="divide-y divide-gray-50 text-sm"></tbody>
+                        </table>
+                    </div>
+                </div>
+            </section>
+
+            <!-- =================================================================================== -->
+            <!-- MÓDULO: FORMULARIO CARGA DE FACTURA -->
+            <!-- =================================================================================== -->
+            <section id="facturas-form-view" class="view-content hidden-section">
+                <div class="mb-4 breadcrumb flex items-center text-gray-500 text-xs uppercase tracking-wide">
+                    <span>Inicio</span>
+                    <svg class="w-3 h-3 mx-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path></svg>
+                    <span>Recepción de Facturas</span>
+                    <svg class="w-3 h-3 mx-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path></svg>
+                    <span class="text-yoayu-green font-bold">Cargar Nueva Factura</span>
+                </div>
+
+                <div class="space-y-6">
+                    <!-- 1. Datos Generales y Adjunto -->
+                    <div class="card p-6 border-t-4 border-t-blue-500 transition-all duration-300">
+                        <h4 class="text-sm font-bold text-gray-700 mb-4 pb-2 border-b border-gray-100 flex justify-between items-center">
+                            <span>1. Datos Generales y Adjunto</span>
+                            <button type="button" onclick="openProviderModal()" class="text-xs text-yoayu-green font-bold hover:underline flex items-center cursor-pointer">
+                                <svg class="w-3 h-3 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path></svg>
+                                Registrar / Ver Proveedores
+                            </button>
+                        </h4>
+                        
+                        <div class="grid grid-cols-1 md:grid-cols-12 gap-6">
+                            <!-- Datos Documento -->
+                            <div class="md:col-span-8 space-y-4">
+                                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                    <div>
+                                        <label class="font-normal text-gray-600 text-xs">N° Orden de Pago Relacionada</label>
+                                        <input type="text" id="fac-op-id" class="w-full mt-1 border-gray-300 focus:ring-yoayu-green h-9 text-sm font-bold text-gray-700 bg-gray-50" placeholder="Ej: OP-005 (Opcional)">
+                                    </div>
+                                    <div>
+                                        <label class="font-normal text-gray-600 text-xs">Estado de Recepción Física <span class="required-asterisk">*</span></label>
+                                        <select id="fac-estado" class="w-full mt-1 border-gray-300 focus:ring-yoayu-green h-9 text-sm">
+                                            <option value="pendiente">Original Pendiente (Solo digital)</option>
+                                            <option value="recibido">Original Físico Recibido en Caja</option>
+                                        </select>
+                                    </div>
+                                    <div class="md:col-span-2 grid grid-cols-1 md:grid-cols-3 gap-4">
+                                        <div class="md:col-span-1">
+                                            <label class="font-normal text-gray-600 text-xs">RUC / Documento <span class="required-asterisk">*</span></label>
+                                            <div class="flex mt-1">
+                                                <input type="text" id="fac-prov-ruc" class="w-full rounded-r-none border-gray-300 focus:ring-yoayu-green h-9 text-sm" placeholder="Ej: 80012345-1">
+                                                <button type="button" onclick="searchFacProvider()" class="bg-yoayu-green text-white px-3 rounded-r hover:bg-yoayu-dark transition-colors"><svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path></svg></button>
+                                            </div>
+                                        </div>
+                                        <div class="md:col-span-2">
+                                            <label class="font-normal text-gray-600 text-xs">Razón Social</label>
+                                            <input type="text" id="fac-prov-name" class="bg-gray-50 border-gray-300 text-gray-700 mt-1 font-bold w-full h-9 text-sm" readonly placeholder="Busque el proveedor...">
+                                        </div>
+                                    </div>
+                                    <div class="md:col-span-2 grid grid-cols-1 md:grid-cols-12 gap-4 items-end">
+                                        <div class="md:col-span-3">
+                                            <label class="font-normal text-gray-600 text-xs">N° Factura <span class="required-asterisk">*</span></label>
+                                            <input type="text" id="fac-numero" class="w-full mt-1 border-gray-300 focus:ring-yoayu-green h-9 text-sm font-mono" placeholder="001-001-0000000">
+                                        </div>
+                                        <div class="md:col-span-3 pb-2">
+                                            <label class="inline-flex items-center cursor-pointer">
+                                                <input type="checkbox" id="fac-electronica" class="form-checkbox h-4 w-4 text-yoayu-green border-gray-300 rounded focus:ring-yoayu-green" onchange="toggleFacElectronica()">
+                                                <span class="ml-2 text-xs font-bold text-gray-700">Electrónica (e-Kuatia)</span>
+                                            </label>
+                                        </div>
+                                        <div class="md:col-span-3">
+                                            <label class="font-normal text-gray-600 text-xs">N° Timbrado <span class="required-asterisk">*</span></label>
+                                            <input type="text" id="fac-timbrado" class="w-full mt-1 border-gray-300 focus:ring-yoayu-green h-9 text-sm" placeholder="12345678">
+                                        </div>
+                                        <div class="md:col-span-3">
+                                            <label class="font-normal text-gray-600 text-xs">Vto. Timbrado <span class="required-asterisk" id="req-vto-timbrado">*</span></label>
+                                            <input type="date" id="fac-vto-timbrado" class="w-full mt-1 border-gray-300 focus:ring-yoayu-green h-9 text-sm">
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <!-- Adjunto de Imagen -->
+                            <div class="md:col-span-4 border-l pl-6">
+                                <label class="mb-2 block text-gray-600 text-xs font-bold uppercase">Adjuntar Imagen Factura <span class="required-asterisk">*</span></label>
+                                <label for="fac-invoice-file" class="flex flex-col items-center justify-center w-full h-36 border-2 border-gray-300 border-dashed rounded cursor-pointer bg-gray-50 hover:bg-gray-100 transition-colors relative overflow-hidden group">
+                                    <div class="flex flex-col items-center justify-center pt-2 pb-2" id="fac-upload-placeholder">
+                                        <svg class="w-8 h-8 mb-2 text-gray-400 group-hover:text-yoayu-green transition-colors" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12"></path></svg>
+                                        <p class="text-xs text-gray-500 font-medium">Click para subir foto/PDF</p>
+                                    </div>
+                                    <div id="fac-upload-preview" class="hidden absolute inset-0 w-full h-full bg-white flex items-center justify-center p-1">
+                                        <div id="fac-preview-content" class="flex items-center w-full h-full justify-center"></div>
+                                        <button type="button" onclick="removeFacFile(event)" class="absolute top-1 right-1 bg-white rounded-full p-1.5 shadow-md text-red-500 hover:text-red-700 hover:bg-red-50 z-10 border border-gray-200 transition-colors"><svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path></svg></button>
+                                    </div>
+                                    <input id="fac-invoice-file" type="file" class="hidden" accept="image/*,application/pdf" onchange="handleFacFileSelect(this)" />
+                                </label>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- 2. DETALLE DE CONCEPTOS (GRILLA CON UNIDAD MEDIDA Y DESCUENTO) -->
+                    <div class="card p-0 transition-all duration-300 border-gray-300">
+                        <div class="p-4 border-b border-gray-200 bg-gray-50 flex justify-between items-center rounded-t">
+                            <h4 class="text-sm font-bold text-gray-800 flex items-center">
+                                <svg class="w-4 h-4 mr-2 text-yoayu-green" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 10h16M4 14h16M4 18h16"></path></svg>
+                                2. Detalle de Conceptos / Factura
+                            </h4>
+                            <button type="button" onclick="addFacConceptRow()" class="text-xs bg-white border border-gray-300 text-gray-700 hover:bg-gray-100 font-bold px-4 py-2 rounded shadow-sm flex items-center transition-colors">
+                                <svg class="w-4 h-4 mr-1 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"></path></svg>
+                                Agregar Línea
+                            </button>
+                        </div>
+                        <div class="overflow-x-auto">
+                            <table class="w-full text-left text-xs whitespace-nowrap">
+                                <thead class="bg-white text-gray-600 border-b-2 border-gray-200">
+                                    <tr>
+                                        <th class="p-3 font-semibold uppercase tracking-wider border-r border-gray-100" rowspan="2">Cod.</th>
+                                        <th class="p-3 font-semibold uppercase tracking-wider border-r border-gray-100" rowspan="2">Descripción / Concepto</th>
+                                        <th class="p-3 font-semibold uppercase tracking-wider border-r border-gray-100" rowspan="2">Cuenta Contable</th>
+                                        <th class="p-3 font-semibold uppercase tracking-wider border-r border-gray-100 text-center" rowspan="2">U.M.</th>
+                                        <th class="p-3 font-semibold uppercase tracking-wider border-r border-gray-100 text-center" rowspan="2">Cant.</th>
+                                        <th class="p-3 font-semibold uppercase tracking-wider border-r border-gray-100 text-right" rowspan="2">Precio Unit.</th>
+                                        <th class="p-3 font-semibold uppercase tracking-wider border-r border-gray-100 text-right" rowspan="2">Descuento</th>
+                                        <th class="p-3 font-semibold uppercase tracking-wider border-r border-gray-200 text-center text-blue-700 bg-blue-50/30" rowspan="2">Tipo IVA</th>
+                                        <th class="p-2 font-semibold uppercase tracking-wider text-center bg-gray-50 border-b border-gray-200" colspan="3">Valor de Venta (Distribución de IVA)</th>
+                                        <th class="p-3 text-center w-10" rowspan="2"></th>
+                                    </tr>
+                                    <tr>
+                                        <th class="p-2 font-semibold text-gray-500 text-right bg-gray-50 border-r border-gray-100 w-24">Exentas</th>
+                                        <th class="p-2 font-semibold text-gray-500 text-right bg-gray-50 border-r border-gray-100 w-24">5%</th>
+                                        <th class="p-2 font-semibold text-gray-800 text-right bg-green-50 w-28">10%</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="fac-conceptos-body" class="divide-y divide-gray-100 bg-white">
+                                    <!-- Las filas se inyectan por JS -->
+                                </tbody>
+                            </table>
+                        </div>
+                        <div class="p-3 bg-gray-50 text-[10px] text-gray-500 border-t border-gray-200 rounded-b">
+                            * Seleccione el Tipo de IVA para distribuir el monto automáticamente.
+                        </div>
+                    </div>
+
+                    <!-- 3. RESUMEN Y CONFIRMACIÓN -->
+                    <div class="card p-6 bg-white shadow-md border-t-4 border-t-yoayu-dark flex justify-between items-center gap-4">
+                        <div class="space-y-2 text-sm w-1/4 border-r pr-4">
+                            <h4 class="text-xs font-bold text-gray-500 uppercase mb-2 border-b pb-1">Subtotales Factura</h4>
+                            <div class="flex justify-between items-center"><span class="text-gray-500 font-medium">Gravadas 10%</span><span class="font-bold text-gray-700 font-mono" id="fac-summary-10">0</span></div>
+                            <div class="flex justify-between items-center"><span class="text-gray-500 font-medium">Gravadas 5%</span><span class="font-bold text-gray-700 font-mono" id="fac-summary-5">0</span></div>
+                            <div class="flex justify-between items-center"><span class="text-gray-500 font-medium">Exentas</span><span class="font-bold text-gray-700 font-mono" id="fac-summary-ex">0</span></div>
+                        </div>
+                        
+                        <!-- NUEVO: LIQUIDACIÓN DE IVA EN FACTURA -->
+                        <div class="space-y-2 text-sm w-1/4 border-r pr-4">
+                            <h4 class="text-xs font-bold text-blue-600 uppercase mb-2 border-b border-blue-100 pb-1">Liquidación de IVA</h4>
+                            <div class="flex justify-between items-center"><span class="text-gray-500 font-medium">IVA 10%</span><span class="font-bold text-blue-700 font-mono" id="fac-iva-10">0</span></div>
+                            <div class="flex justify-between items-center"><span class="text-gray-500 font-medium">IVA 5%</span><span class="font-bold text-blue-700 font-mono" id="fac-iva-5">0</span></div>
+                            <div class="flex justify-between items-center pt-1 mt-1 border-t border-gray-100"><span class="text-gray-800 font-bold text-xs uppercase">Total IVA</span><span class="font-bold text-blue-800 font-mono" id="fac-iva-total">0</span></div>
+                        </div>
+
+                        <div class="flex flex-col items-end w-1/4 pr-4">
+                            <span class="text-xs font-bold text-gray-500 uppercase tracking-wider">TOTAL FACTURA</span>
+                            <div class="text-3xl font-extrabold text-yoayu-green mt-1 tracking-tight" id="fac-total-display">0 Gs</div>
+                        </div>
+
+                        <div class="flex flex-col gap-3 w-1/4">
+                            <button onclick="saveFactura()" class="btn-apex-primary h-12 text-sm shadow-md font-bold rounded transition-transform active:scale-95 flex items-center justify-center">
+                                <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path></svg>
+                                Guardar Factura
+                            </button>
+                            <button onclick="cancelFactura()" class="text-gray-500 text-xs hover:text-gray-800 hover:underline text-center transition-colors">Cancelar y Volver</button>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+             <!-- Vistas Existentes (Ocultadas para simplicidad) -->
+            <section id="apertura-view" class="view-content hidden-section"><div class="card p-10 text-center"><h3 class="text-gray-400">Módulo de Apertura (Existente)</h3></div></section>
+            <section id="caja-view" class="view-content hidden-section"><div class="card p-10 text-center"><h3 class="text-gray-400">Módulo de Caja (Existente)</h3></div></section>
+            <section id="reportes-view" class="view-content hidden-section"><div class="card p-10 text-center"><h3 class="text-gray-400">Módulo de Reportes (Existente)</h3></div></section>
+
+        </main>
+    </div>
+</div>
+
+<!-- DATALIST PARA BÚSQUEDA DE CUENTAS CONTABLES -->
+<datalist id="lista-cuentas">
+    <option value="1.1.01 - Caja y Bancos"></option>
+    <option value="2.1.01 - Proveedores Varios"></option>
+    <option value="5.1.03 - Gastos de Oficina"></option>
+    <option value="5.1.04 - Servicios de Seguridad / Vigilancia"></option>
+    <option value="5.1.05 - Servicios Básicos"></option>
+    <option value="5.2.01 - Mantenimiento"></option>
+    <option value="5.3.01 - Honorarios Profesionales"></option>
+    <option value="5.4.01 - Seguros Varios"></option>
+    <option value="5.5.01 - Útiles y Papelería"></option>
+</datalist>
+
+<!-- MODAL DE IMPRESIÓN -->
+<div id="modal-print" class="fixed inset-0 hidden overflow-y-auto h-full w-full modal-backdrop flex items-center justify-center z-50">
+    <div class="relative p-0 border w-full max-w-4xl shadow-2xl rounded-lg bg-white h-[85vh] flex flex-col">
+        <div class="bg-gray-800 text-white px-4 py-3 rounded-t-lg flex justify-between items-center">
+            <h3 class="font-bold flex items-center" id="modal-print-title">Vista Previa de Impresión</h3>
+            <button onclick="document.getElementById('modal-print').classList.add('hidden')" class="text-gray-400 hover:text-white">&times;</button>
+        </div>
+        <div class="flex-1 bg-gray-500 p-8 overflow-y-auto flex justify-center">
+            <!-- CONTENIDO: HOJA A4 (ORDEN INDIVIDUAL) -->
+            <div id="print-content-single" class="bg-white w-full max-w-[210mm] min-h-[297mm] p-8 shadow-lg text-sm font-serif text-black space-y-6 relative">
+                <div class="border-b-2 border-black pb-4">
+                    <div class="flex justify-between items-start">
+                        <img src="image_0c3875.png" alt="Logo" class="h-10 grayscale opacity-50">
+                        <div class="text-right"><h1 class="text-xl font-bold uppercase">Orden de Pago</h1><p class="text-lg">N° <span id="print-op-num">001-2025</span></p></div>
+                    </div>
+                </div>
+                <div class="grid grid-cols-2 gap-4 text-xs">
+                    <div><strong>Fecha:</strong> <span id="print-date">--</span></div>
+                    <div><strong>Proveedor:</strong> <span id="print-provider">--</span></div>
+                    <div><strong>RUC:</strong> <span id="print-ruc">--</span></div>
+                    <div><strong>Factura N°:</strong> <span id="print-invoice">--</span></div>
+                </div>
+                
+                <h4 class="font-bold mt-4 text-xs uppercase border-b border-gray-300 pb-1">Detalle de Conceptos</h4>
+                <table class="w-full border-collapse border border-black mb-4 text-xs">
+                    <thead>
+                        <tr class="bg-gray-100">
+                            <th class="border border-black p-1 w-12 text-center">Cant.</th>
+                            <th class="border border-black p-1">Descripción / Cuenta Contable</th>
+                            <th class="border border-black p-1 text-right w-24">Subtotal</th>
+                        </tr>
+                    </thead>
+                    <tbody id="print-conceptos-body">
+                        <!-- Llenado por JS -->
+                    </tbody>
+                    <tfoot>
+                        <tr id="print-retention-row" class="hidden"><td colspan="2" class="border border-black p-1 text-right">(-) Retención IVA</td><td class="border border-black p-1 text-right font-mono" id="print-retention">--</td></tr>
+                        <tr class="font-bold bg-gray-50"><td colspan="2" class="border border-black p-1 text-right uppercase">TOTAL A PAGAR:</td><td class="border border-black p-1 text-right text-sm font-mono" id="print-total">--</td></tr>
+                    </tfoot>
+                </table>
+                <div class="mb-8 text-xs"><p class="font-bold mb-1">Medio de Pago:</p><p id="print-method">--</p></div>
+                
+                <div class="flex justify-between mt-12 pt-8 text-center text-xs"><div class="w-1/3 border-t border-black pt-1">Elaborado por<br>JPerez</div><div class="w-1/3 border-t border-black pt-1">Autorizado por<br><span id="print-auth">Gerencia</span></div></div>
+                <div class="border-b border-dashed border-gray-400 my-8 relative"><span class="absolute top-[-10px] left-1/2 bg-white px-2 text-gray-400 text-xs">CORTAR AQUÍ</span></div>
+                 <div class="border-b-2 border-black pb-2 mb-4 mt-8"><div class="flex justify-between"><h1 class="text-xl font-bold uppercase">RECIBO DE DINERO / CHEQUE</h1><p>N° OP Ref: <span id="print-op-ref">--</span></p></div></div>
+                <div class="text-justify leading-relaxed mb-12 text-xs">Recibí de <strong>COOPERATIVA YOAYU LTDA.</strong> la suma de Guaraníes <strong id="print-total-text">---</strong> en concepto de pago de factura N° <span id="print-invoice-ref">--</span>.</div>
+                <div class="flex justify-end mt-12"><div class="w-1/2 border-t border-black pt-1 text-center text-xs">Firma y Aclaración<br>(Proveedor / Cobrador)</div></div>
+            </div>
+            
+            <!-- CONTENIDO: REPORTE DE LISTADO (TABLA) -->
+            <div id="print-content-list" class="hidden bg-white w-full max-w-[210mm] min-h-[297mm] p-8 shadow-lg text-sm font-serif text-black relative">
+                <div class="border-b-2 border-black pb-4 mb-6 flex justify-between items-center"><div><h1 class="text-xl font-bold uppercase">Reporte Diario de Pagos</h1><p class="text-gray-500">Listado General de Órdenes</p></div><div class="text-right"><p>Fecha de Emisión: <span id="report-print-date">--</span></p></div></div>
+                <table class="w-full border-collapse border border-black text-xs"><thead><tr class="bg-gray-100"><th class="border border-black p-2 text-left">N° Orden</th><th class="border border-black p-2 text-left">Fecha</th><th class="border border-black p-2 text-left">Proveedor</th><th class="border border-black p-2 text-center">Medio</th><th class="border border-black p-2 text-center">Estado</th><th class="border border-black p-2 text-right">Monto</th></tr></thead><tbody id="report-table-body"></tbody><tfoot><tr class="font-bold bg-gray-50"><td colspan="5" class="border border-black p-2 text-right uppercase">Total General:</td><td class="border border-black p-2 text-right" id="report-total-amount">0 Gs</td></tr></tfoot></table>
+            </div>
+        </div>
+        <div class="bg-gray-100 px-4 py-3 flex justify-end gap-2 rounded-b-lg"><button onclick="document.getElementById('modal-print').classList.add('hidden')" class="px-4 py-2 bg-white border border-gray-300 rounded text-sm hover:bg-gray-50">Cerrar</button><button onclick="alert('Enviando a impresora predeterminada...')" class="px-4 py-2 bg-blue-600 text-white rounded text-sm hover:bg-blue-700 flex items-center">Imprimir</button></div>
+    </div>
+</div>
+
+<!-- MODAL: GESTIÓN DE PROVEEDORES (Resumido para contexto) -->
+<div id="modal-provider" class="fixed inset-0 hidden overflow-y-auto h-full w-full modal-backdrop flex items-center justify-center z-50">
+    <div class="relative p-0 border w-full max-w-3xl shadow-2xl rounded-lg bg-white h-[80vh] flex flex-col">
+         <div class="bg-yoayu-green text-white px-6 py-4 rounded-t-lg flex justify-between items-center">
+            <h3 class="font-bold text-lg flex items-center">Gestión de Proveedores</h3>
+            <button onclick="document.getElementById('modal-provider').classList.add('hidden')" class="text-white hover:text-gray-200 text-2xl font-bold">&times;</button>
+        </div>
+        <div class="flex-1 bg-gray-50 p-6 overflow-y-auto flex flex-col gap-6">
+            <div class="bg-white p-6 rounded shadow border border-gray-200">
+                <h4 class="text-sm font-bold text-gray-700 mb-4 pb-2 border-b">Registrar Nuevo Proveedor</h4>
+                <div class="grid grid-cols-2 gap-4">
+                    <div><label class="text-xs">RUC *</label><input type="text" id="new-prov-ruc" class="w-full text-sm" placeholder="Ej: 80012345-1"></div>
+                    <div><label class="text-xs">Razón Social *</label><input type="text" id="new-prov-name" class="w-full text-sm" placeholder="Nombre de la empresa"></div>
+                    <div class="col-span-2 flex items-center">
+                        <input type="checkbox" id="new-prov-electronic" class="w-4 h-4 mr-2 text-yoayu-green focus:ring-yoayu-green rounded" onchange="toggleElectronicBiller()">
+                        <label class="text-sm font-bold text-gray-700">¿Es Facturador Electrónico? (e-Kuatia)</label>
+                    </div>
+                    <div><label class="text-xs">Timbrado *</label><input type="text" id="new-prov-timbrado" class="w-full text-sm"></div>
+                    <div><label class="text-xs">Vencimiento *</label><input type="date" id="new-prov-vto" class="w-full text-sm"></div>
+                </div>
+                <div class="mt-4 text-right"><button onclick="saveNewProvider()" class="btn-apex-success shadow-sm transform transition active:scale-95">Guardar Proveedor</button></div>
+            </div>
+            <div class="bg-white rounded shadow flex-1 flex flex-col min-h-[250px]">
+                <div class="p-3 border-b bg-gray-50 font-bold text-gray-700 text-sm">Directorio de Proveedores</div>
+                <div class="overflow-y-auto flex-1">
+                    <table class="w-full text-left text-xs">
+                        <thead class="bg-gray-100 sticky top-0 shadow-sm">
+                            <tr>
+                                <th class="p-3 border-b text-gray-600">RUC</th>
+                                <th class="p-3 border-b text-gray-600">Razón Social</th>
+                                <th class="p-3 border-b text-gray-600">Timbrado</th>
+                                <th class="p-3 border-b text-gray-600 text-center w-24">Acción</th>
+                            </tr>
+                        </thead>
+                        <tbody id="provider-list-body" class="divide-y divide-gray-100">
+                            <!-- Inyectado por JS -->
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- MODAL: SELECCIONAR FACTURA (ÓRDENES DE PAGO) -->
+<div id="modal-facturas-op" class="fixed inset-0 hidden overflow-y-auto h-full w-full modal-backdrop flex items-center justify-center z-50">
+    <div class="relative p-0 border w-full max-w-2xl shadow-2xl rounded-lg bg-white flex flex-col">
+        <div class="bg-yoayu-green text-white px-4 py-3 rounded-t-lg flex justify-between items-center">
+            <h3 class="font-bold flex items-center">
+                <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path></svg>
+                Vincular Factura Cargada
+            </h3>
+            <button onclick="document.getElementById('modal-facturas-op').classList.add('hidden')" class="text-white hover:text-gray-200 text-2xl font-bold">&times;</button>
+        </div>
+        <div class="p-4 bg-gray-50 flex-1 overflow-y-auto">
+            <p class="text-xs text-gray-500 mb-3 font-bold uppercase tracking-wide" id="modal-facturas-op-subtitle">Facturas disponibles</p>
+            <div class="overflow-hidden border border-gray-200 rounded">
+                <table class="w-full text-left border-collapse bg-white text-sm">
+                    <thead>
+                        <tr class="bg-gray-100 border-b">
+                            <th class="p-3 font-bold text-gray-600">N° Factura</th>
+                            <th class="p-3 font-bold text-gray-600 text-center">Estado Físico</th>
+                            <th class="p-3 font-bold text-gray-600 text-right">Monto Total</th>
+                            <th class="p-3 font-bold text-gray-600 text-center">Acción</th>
+                        </tr>
+                    </thead>
+                    <tbody id="modal-facturas-op-body" class="divide-y divide-gray-100">
+                        <!-- Llenado por JS -->
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    // --- DATOS MOCK ---
+    const MOCK_PROVIDERS = [
+        { ruc: '80012345-1', name: 'OFFICE SUPPLIES S.A.', timbrado: '12345678', timbradoVence: '2025-12-31', acumuladoMes: 4500000, isElectronic: false }, 
+        { ruc: '80099887-2', name: 'LIMPIEZA TOTAL S.R.L.', timbrado: '87654321', timbradoVence: '2024-01-01', acumuladoMes: 0, isElectronic: false },   
+        { ruc: '80055555-5', name: 'ANDE', timbrado: '999999', timbradoVence: 'Electrónico', acumuladoMes: 0, isElectronic: true }
+    ];
+
+    let MOCK_ORDERS = [
+        { 
+            id: 'OP-001', date: '2025-01-20', tipo: 'PROVEEDORES', provider: 'ANDE', conceptoExtra: '', ruc: '80055555-5', 
+            method: 'Efectivo', amount: 450000, status: 'Pendiente', user: 'JPerez',
+            invoice: '001-001-1234567',
+            conceptos: [
+                { cod: '001', desc: 'Consumo Energía Eléctrica', cuenta: '5.1.05 - Servicios Básicos', cant: 1, precio: 450000, tipoIva: '10', exenta: 0, iva5: 0, iva10: 450000 }
+            ]
+        },
+        { 
+            id: 'OP-002', date: '2025-01-21', tipo: 'REPOSICION DE CAJA MATRIZ', provider: 'Múltiples Cajas (2)', conceptoExtra: 'Casa Matriz', ruc: 'S/RUC',
+            method: 'Transferencia', amount: 2000000, status: 'Pendiente', user: 'JPerez',
+            invoice: '', 
+            repoMotivo: 'Reposición urgente de Fines de Semana',
+            repoItems: [
+                { sucursal: 'Casa Matriz', caja: '02', responsable: 'Juan Perez', monto: 1500000 },
+                { sucursal: 'Casa Matriz', caja: '03', responsable: 'Maria Lopez', monto: 500000 }
+            ]
+        }
+    ];
+
+    let MOCK_FACTURAS = [
+        { opId: 'OP-001', proveedor: 'ANDE', factura: '001-001-1234567', monto: 450000, estado: 'pendiente', conceptos: [{ cod: '101', desc: 'Consumo Energía', cuenta: '5.1.05 - Servicios Básicos', cant: 1, precio: 450000, tipoIva: '10', iva10: 450000 }] },
+        { opId: 'S/OP', proveedor: 'OFFICE SUPPLIES S.A.', factura: '002-001-0000458', monto: 1250000, estado: 'recibido', conceptos: [{ cod: '205', desc: 'Resmas A4 y Toners', cuenta: '5.5.01 - Útiles y Papelería', cant: 10, precio: 125000, tipoIva: '10', iva10: 1250000 }] },
+        { opId: 'S/OP', proveedor: 'OFFICE SUPPLIES S.A.', factura: '002-001-0000459', monto: 750000, estado: 'pendiente', conceptos: [{ cod: '206', desc: 'Sillas de Oficina', cuenta: '5.1.03 - Gastos de Oficina', cant: 2, precio: 375000, tipoIva: '10', iva10: 750000 }] },
+        { opId: 'S/OP', proveedor: 'LIMPIEZA TOTAL S.R.L.', factura: '001-002-0009852', monto: 3500000, estado: 'pendiente', conceptos: [{ cod: '900', desc: 'Servicio Limpieza Mensual', cuenta: '5.2.01 - Mantenimiento', cant: 1, precio: 3500000, tipoIva: '10', iva10: 3500000 }] }
+    ];
+
+    let currentProvider = null;
+    let retentionAmount = 0;
+    let repoItemsList = []; 
+    let currentLinkedInvoices = []; // NUEVO: Para manejar múltiples facturas
+
+    // --- NAVEGACIÓN ---
+    document.addEventListener('DOMContentLoaded', () => {
+        document.getElementById('header-date').textContent = new Date().toLocaleDateString('es-PY', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' });
+        renderPaymentOrders(); 
+        renderFacturas();
+        switchView('dashboard'); 
+    });
+
+    function switchView(viewId) {
+        document.querySelectorAll('.view-content').forEach(v => {
+            v.classList.remove('active');
+            if(v.id === 'ordenes-pago-form-view' || v.id === 'facturas-form-view') v.classList.add('hidden-section');
+        });
+
+        if (viewId === 'ordenes-pago') {
+            document.getElementById('ordenes-pago-view').classList.remove('hidden-section');
+            document.getElementById('ordenes-pago-view').classList.add('active');
+            renderPaymentOrders();
+        } else if (viewId === 'facturas') {
+            document.getElementById('facturas-view').classList.remove('hidden-section');
+            document.getElementById('facturas-view').classList.add('active');
+            renderFacturas();
+        } else {
+            const target = document.getElementById(viewId + '-view');
+            if(target) target.classList.add('active');
+        }
+
+        const titles = { 'dashboard': 'Panel Principal', 'ordenes-pago': 'Gestión de Pagos', 'facturas': 'Recepción de Facturas' };
+        if(titles[viewId]) document.getElementById('page-title').textContent = titles[viewId];
+        
+        document.querySelectorAll('.nav-item').forEach(i => i.classList.remove('active-link'));
+        const navItem = document.querySelector(`.nav-item[data-view="${viewId}"]`);
+        if (navItem) navItem.classList.add('active-link');
+    }
+
+    // --- MÓDULO ÓRDENES DE PAGO ---
+    function renderPaymentOrders() {
+        const tbody = document.getElementById('op-table-body');
+        tbody.innerHTML = '';
+        const search = document.getElementById('op-search').value.toLowerCase();
+        const statusFilter = document.getElementById('op-filter-status').value;
+
+        MOCK_ORDERS.forEach(op => {
+            if(search && !op.provider.toLowerCase().includes(search) && !op.id.toLowerCase().includes(search)) return;
+            if(statusFilter && op.status !== statusFilter && statusFilter !== 'Todos') return;
+
+            const statusClass = {
+                'Registrada': 'bg-gray-100 text-gray-800',
+                'Pendiente': 'bg-orange-100 text-orange-800 border border-orange-200',
+                'Autorizada': 'bg-blue-100 text-blue-800',
+                'Impresa': 'bg-green-100 text-green-800',
+                'Anulada': 'bg-red-100 text-red-800'
+            }[op.status] || 'bg-gray-100 text-gray-800';
+
+            const tipoBadge = op.tipo.includes('PROVEEDORES') 
+                ? `<span class="px-2 py-0.5 text-[9px] font-bold text-green-700 border border-green-300 rounded whitespace-nowrap">PROVEEDOR</span>`
+                : `<span class="px-2 py-0.5 text-[9px] font-bold text-blue-700 bg-blue-50 border border-blue-200 rounded whitespace-nowrap">REPOSICIÓN</span>`;
+
+            tbody.insertAdjacentHTML('beforeend', `
+                <tr class="hover:bg-gray-50 border-b transition-colors h-14">
+                    <td class="p-4 text-xs text-gray-500">${op.date}</td>
+                    <td class="p-4 text-xs font-bold text-gray-800">${op.id}</td>
+                    <td class="p-4 text-center">${tipoBadge}</td>
+                    <td class="p-4"><div class="font-bold text-gray-800 text-xs">${op.provider}</div><div class="text-[10px] text-blue-600 mt-0.5">${op.conceptoExtra||''}</div></td>
+                    <td class="p-4 text-xs text-gray-500">${op.method}</td>
+                    <td class="p-4 text-right text-xs font-bold text-gray-800">${op.amount.toLocaleString('es-PY')}</td>
+                    <td class="p-4 text-center"><span class="px-2 py-0.5 rounded text-[10px] font-bold ${statusClass}">${op.status}</span></td>
+                    <td class="p-4 text-xs text-gray-500">${op.user}</td>
+                    <td class="p-4 text-center flex items-center justify-center gap-1 h-14">
+                        <button onclick="alert('Verificando ${op.id}')" class="px-1.5 py-1 text-[9px] font-bold border border-gray-300 rounded text-gray-600 hover:bg-gray-100 transition-colors shadow-sm" title="Verificar">Verif.</button>
+                        <button onclick="alert('Aprobando ${op.id}')" class="px-1.5 py-1 text-[9px] font-bold border border-gray-300 rounded text-gray-600 hover:bg-gray-100 transition-colors shadow-sm" title="Aprobar">Aprob.</button>
+                        <button onclick="alert('Autorizando ${op.id}')" class="px-1.5 py-1 text-[9px] font-bold border border-gray-300 rounded text-gray-600 hover:bg-gray-100 transition-colors shadow-sm" title="Autorizar">Auto.</button>
+                        <button onclick="alert('Controlando ${op.id}')" class="px-1.5 py-1 text-[9px] font-bold border border-gray-300 rounded text-gray-600 hover:bg-gray-100 transition-colors shadow-sm" title="Contraloría">Contr.</button>
+                        
+                        <button onclick="printOrderMock('${op.id}')" class="text-blue-600 hover:text-blue-800 p-1 rounded ml-1" title="Imprimir/Ver"><svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"></path></svg></button>
+                        <button onclick="editOrder('${op.id}')" class="text-green-600 hover:text-green-800 p-1 rounded" title="Editar"><svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z"></path></svg></button>
+                    </td>
+                </tr>
+            `);
+        });
+    }
+
+    function showOrdenPagoForm() { openOrderForm(false); }
+    function editOrder(id) { openOrderForm(true, id); }
+
+    function openOrderForm(isEdit, id = null) {
+        document.getElementById('ordenes-pago-view').classList.add('hidden-section');
+        document.getElementById('ordenes-pago-view').classList.remove('active');
+        document.getElementById('ordenes-pago-form-view').classList.remove('hidden-section');
+        document.getElementById('ordenes-pago-form-view').classList.add('active');
+        
+        // Reset General
+        document.getElementById('op-tipo-orden').value = 'PROVEEDORES';
+        document.getElementById('prov-ruc-search').value = '';
+        document.getElementById('prov-name').value = '';
+        document.getElementById('timbrado-status').classList.add('hidden');
+        document.getElementById('op-conceptos-body').innerHTML = '';
+        
+        const pendingBox = document.getElementById('prov-pending-invoices');
+        if(pendingBox) pendingBox.classList.add('hidden');
+        
+        repoItemsList = [];
+        currentLinkedInvoices = []; // Resetear facturas vinculadas
+        document.getElementById('repo-motivo').value = '';
+        document.getElementById('repo-add-caja').value = '';
+        
+        // Reset Totals & Files
+        document.getElementById('summary-grav-10').textContent = '0';
+        document.getElementById('summary-grav-5').textContent = '0';
+        document.getElementById('summary-exenta').textContent = '0';
+        document.getElementById('op-total-display').textContent = '0 Gs';
+        document.getElementById('retention-box').classList.add('hidden');
+        document.getElementById('op-invoice-file').value = '';
+        
+        // Reset IVA displays
+        if(document.getElementById('summary-iva-10')) document.getElementById('summary-iva-10').textContent = '0';
+        if(document.getElementById('summary-iva-5')) document.getElementById('summary-iva-5').textContent = '0';
+        if(document.getElementById('summary-iva-total')) document.getElementById('summary-iva-total').textContent = '0';
+
+        if (isEdit) {
+            const op = MOCK_ORDERS.find(o => o.id === id);
+            document.getElementById('op-edit-id').value = id;
+            document.getElementById('form-op-breadcrumb').textContent = `Editando Orden ${id}`;
+            document.getElementById('btn-confirm-order').textContent = "Guardar Cambios";
+            document.getElementById('status-container').classList.remove('hidden');
+            
+            document.getElementById('op-tipo-orden').value = op.tipo || 'PROVEEDORES';
+            document.getElementById('prov-ruc-search').value = op.ruc === 'S/RUC' ? '' : op.ruc;
+            document.getElementById('prov-name').value = op.provider;
+            document.getElementById('op-factura-nro').value = op.invoice || '';
+            document.getElementById('op-medio-pago').value = op.method;
+            document.getElementById('op-status-select').value = op.status;
+            
+            if (op.invoice && op.invoice !== 'S/N') {
+                currentLinkedInvoices = op.invoice.split(', ');
+            }
+
+            if (op.tipo && op.tipo.includes('REPOSICION')) {
+                document.getElementById('repo-motivo').value = op.repoMotivo || '';
+                repoItemsList = op.repoItems ? [...op.repoItems] : [];
+                currentProvider = null;
+            } else {
+                currentProvider = MOCK_PROVIDERS.find(p => p.ruc === op.ruc);
+                if(currentProvider) searchProvider();
+                
+                // Cargar conceptos
+                if(op.conceptos && op.conceptos.length > 0) {
+                    op.conceptos.forEach(item => addOpConceptRow(item, true)); // true = bloquea edición de montos
+                }
+            }
+            updateFormType(); 
+            
+            // Forzar actualización visual sin borrar datos
+            const hasInv = op.invoice && op.invoice !== 'S/N';
+            document.querySelector(`input[name="has_invoice"][value="${hasInv ? 'Si' : 'No'}"]`).checked = true;
+            toggleInvoiceFields(hasInv);
+            document.getElementById('op-factura-nro').value = op.invoice || '';
+
+            calcTotals();
+        } else {
+            document.getElementById('op-edit-id').value = '';
+            document.getElementById('form-op-breadcrumb').textContent = "Nueva Orden";
+            document.getElementById('btn-confirm-order').textContent = "Confirmar Orden";
+            document.getElementById('status-container').classList.add('hidden');
+            document.querySelector('input[name="has_invoice"][value="Si"]').checked = true; // Forzar "Si" por defecto
+            currentProvider = null;
+            retentionAmount = 0;
+            updateFormType();
+            toggleInvoiceFields(true); // Bloquear carga manual y pedir vinculación
+        }
+    }
+
+    function updateFormType() {
+        const isRepo = document.getElementById('op-tipo-orden').value.includes('REPOSICION');
+        
+        if (isRepo) {
+            document.getElementById('panel-proveedor').classList.add('hidden');
+            document.getElementById('panel-reposicion').classList.remove('hidden');
+            document.getElementById('col-factura').classList.add('hidden');
+            document.getElementById('panel-conceptos').classList.add('hidden'); // Ocultar tabla de conceptos de factura
+            
+            // Corrección de layout para Reposición
+            document.getElementById('col-medio-pago').className = 'md:col-span-12 space-y-4 pl-0';
+            document.getElementById('title-comprobante').textContent = '2. Medio de Pago Propuesto';
+            renderRepoItems();
+        } else {
+            document.getElementById('panel-proveedor').classList.remove('hidden');
+            document.getElementById('panel-reposicion').classList.add('hidden');
+            document.getElementById('col-factura').classList.remove('hidden');
+            document.getElementById('panel-conceptos').classList.remove('hidden'); // Mostrar tabla de conceptos
+            
+            // Corrección de layout restaurando columnas divididas
+            document.getElementById('col-medio-pago').className = 'md:col-span-7 space-y-4 border-l pl-6';
+            document.getElementById('title-comprobante').textContent = '2. Comprobante y Medio de Pago';
+        }
+    }
+
+    // --- LÓGICA DE TABLA DE CONCEPTOS (LA SOLICITADA EN EL PROMPT) ---
+    function addOpConceptRow(item = {}, isReadonly = false) {
+        const tbody = document.getElementById('op-conceptos-body');
+        const tr = document.createElement('tr');
+        tr.className = "hover:bg-gray-50 item-concept-row";
+        
+        // Bloquear inputs si proviene de una factura vinculada (Dejamos libre solo la cuenta contable)
+        const roClass = isReadonly ? 'bg-gray-100 cursor-not-allowed pointer-events-none text-gray-500' : '';
+        const roAttr = isReadonly ? 'readonly tabindex="-1"' : '';
+        const btnAccion = isReadonly ? 
+            `<span class="text-gray-400 p-1.5" title="Bloqueado por factura vinculada"><svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"></path></svg></span>` : 
+            `<button type="button" onclick="this.closest('tr').remove(); calcTotals();" class="text-red-500 hover:text-red-700 hover:bg-red-50 p-1.5 rounded transition-colors" title="Eliminar Línea"><svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path></svg></button>`;
+
+        let selectCuenta = `<input type="text" list="lista-cuentas" class="w-full min-w-[180px] h-8 text-[11px] border-gray-300 rounded focus:ring-yoayu-green val-cuenta" placeholder="🔍 Escriba para buscar..." value="${item.cuenta || ''}">`;
+        let selectIva = `<select class="w-16 h-8 text-[11px] border-blue-200 bg-blue-50/50 rounded focus:ring-blue-500 val-tipo-iva text-blue-800 font-bold ${roClass}" ${roAttr} onchange="calcRowOp(this)"><option value="10" ${item.tipoIva === '10' || !item.tipoIva ? 'selected' : ''}>10%</option><option value="5" ${item.tipoIva === '5' ? 'selected' : ''}>5%</option><option value="EX" ${item.tipoIva === 'EX' ? 'selected' : ''}>EX</option></select>`;
+
+        tr.innerHTML = `
+            <td class="p-2 border-r border-b border-gray-100"><input type="text" class="w-14 h-8 text-[11px] border-gray-300 rounded text-center val-cod ${roClass}" ${roAttr} placeholder="Cod" value="${item.cod || ''}"></td>
+            <td class="p-2 border-r border-b border-gray-100"><input type="text" class="w-full min-w-[150px] h-8 text-[11px] border-gray-300 rounded focus:ring-yoayu-green val-desc ${roClass}" ${roAttr} placeholder="Descripción del ítem" value="${item.desc || ''}"></td>
+            <td class="p-2 border-r border-b border-gray-100">${selectCuenta}</td>
+            <td class="p-2 border-r border-b border-gray-100"><input type="number" class="w-16 h-8 text-xs border-gray-300 rounded text-center val-cant ${roClass}" ${roAttr} value="${item.cant || 1}" min="1" oninput="calcRowOp(this)"></td>
+            <td class="p-2 border-r border-b border-gray-100"><input type="text" class="w-full min-w-[80px] h-8 text-xs border-gray-300 rounded text-right val-precio font-medium ${roClass}" ${roAttr} placeholder="0" value="${item.precio ? item.precio.toLocaleString('es-PY') : ''}" oninput="formatNumberInput(this); calcRowOp(this)"></td>
+            <td class="p-2 border-r border-b border-gray-200 text-center bg-blue-50/30">${selectIva}</td>
+            
+            <td class="p-2 border-r border-b border-gray-100 bg-gray-50"><input type="text" class="w-full min-w-[80px] h-8 text-xs border-gray-300 rounded text-right val-exenta text-gray-600 ${roClass}" ${roAttr} placeholder="0" value="${item.exenta ? item.exenta.toLocaleString('es-PY') : ''}" oninput="formatNumberInput(this); calcTotals()"></td>
+            <td class="p-2 border-r border-b border-gray-100 bg-gray-50"><input type="text" class="w-full min-w-[80px] h-8 text-xs border-gray-300 rounded text-right val-iva5 text-gray-600 ${roClass}" ${roAttr} placeholder="0" value="${item.iva5 ? item.iva5.toLocaleString('es-PY') : ''}" oninput="formatNumberInput(this); calcTotals()"></td>
+            <td class="p-2 border-b border-gray-100 bg-green-50"><input type="text" class="w-full min-w-[80px] h-8 text-xs border-green-200 rounded text-right val-iva10 font-bold text-yoayu-green focus:ring-yoayu-green focus:border-yoayu-green ${roClass}" ${roAttr} placeholder="0" value="${item.iva10 ? item.iva10.toLocaleString('es-PY') : ''}" oninput="formatNumberInput(this); calcTotals()"></td>
+            
+            <td class="p-2 border-b text-center align-middle">${btnAccion}</td>
+        `;
+        tbody.appendChild(tr);
+    }
+
+    function calcRowOp(input) {
+        const tr = input.closest('tr');
+        const cantStr = tr.querySelector('.val-cant').value;
+        const precioStr = tr.querySelector('.val-precio').value.replace(/\D/g, '');
+        const tipoIva = tr.querySelector('.val-tipo-iva').value;
+        const cant = parseFloat(cantStr) || 0;
+        const precio = parseInt(precioStr) || 0;
+        const total = cant * precio;
+        
+        tr.querySelector('.val-iva10').value = '';
+        tr.querySelector('.val-iva5').value = '';
+        tr.querySelector('.val-exenta').value = '';
+
+        // Autocompletar columna correspondiente
+        if(total > 0) {
+            if (tipoIva === '10') tr.querySelector('.val-iva10').value = total.toLocaleString('es-PY');
+            else if (tipoIva === '5') tr.querySelector('.val-iva5').value = total.toLocaleString('es-PY');
+            else if (tipoIva === 'EX') tr.querySelector('.val-exenta').value = total.toLocaleString('es-PY');
+        }
+        calcTotals();
+    }
+
+    function formatNumberInput(input) {
+        let valStr = input.value.replace(/\D/g, '');
+        let val = parseInt(valStr) || 0;
+        input.value = val > 0 ? val.toLocaleString('es-PY') : '';
+    }
+
+    // --- CALCULO TOTALES ---
+    function calcTotals() {
+        let total10 = 0, total5 = 0, totalEx = 0;
+        const isRepo = document.getElementById('op-tipo-orden').value.includes('REPOSICION');
+
+        if (!isRepo) {
+            document.querySelectorAll('#op-conceptos-body .item-concept-row').forEach(tr => {
+                total10 += parseInt(tr.querySelector('.val-iva10').value.replace(/\D/g, '')) || 0;
+                total5 += parseInt(tr.querySelector('.val-iva5').value.replace(/\D/g, '')) || 0;
+                totalEx += parseInt(tr.querySelector('.val-exenta').value.replace(/\D/g, '')) || 0;
+            });
+        } else {
+            totalEx = repoItemsList.reduce((sum, item) => sum + item.monto, 0);
+        }
+
+        let subtotal = total10 + total5 + totalEx;
+        let iva10 = Math.round(total10 / 11);
+        let iva5 = Math.round(total5 / 21);
+        let totalIva = iva10 + iva5;
+        retentionAmount = 0;
+
+        if (currentProvider && !isRepo) {
+            const nuevoAcumulado = currentProvider.acumuladoMes + subtotal;
+            if (nuevoAcumulado > 5000000 && (total10 > 0 || total5 > 0)) {
+                retentionAmount = Math.round(totalIva * 0.30); // 30% del Total del IVA
+                document.getElementById('retention-box').classList.remove('hidden');
+                document.getElementById('op-ret-display').textContent = retentionAmount.toLocaleString('es-PY');
+            } else {
+                document.getElementById('retention-box').classList.add('hidden');
+            }
+        } else {
+            document.getElementById('retention-box').classList.add('hidden');
+        }
+
+        const totalPagar = subtotal - retentionAmount;
+
+        // Actualizar UI del panel de resumen
+        document.getElementById('summary-grav-10').textContent = total10.toLocaleString('es-PY');
+        document.getElementById('summary-grav-5').textContent = total5.toLocaleString('es-PY');
+        document.getElementById('summary-exenta').textContent = totalEx.toLocaleString('es-PY');
+        
+        // Actualizar UI de IVA
+        if(document.getElementById('summary-iva-10')) document.getElementById('summary-iva-10').textContent = iva10.toLocaleString('es-PY');
+        if(document.getElementById('summary-iva-5')) document.getElementById('summary-iva-5').textContent = iva5.toLocaleString('es-PY');
+        if(document.getElementById('summary-iva-total')) document.getElementById('summary-iva-total').textContent = totalIva.toLocaleString('es-PY');
+
+        document.getElementById('op-total-display').textContent = totalPagar.toLocaleString('es-PY') + ' Gs';
+    }
+
+    // Funciones Reposición
+    function addRepoItem() {
+        const suc = document.getElementById('repo-add-sucursal').value;
+        const caja = document.getElementById('repo-add-caja').value.trim();
+        const resp = document.getElementById('repo-add-resp').value.trim();
+        const monto = parseInt(document.getElementById('repo-add-monto').value.replace(/\./g, '')) || 0;
+        if (!caja || !resp || monto <= 0) return alert("Complete Caja N°, Responsable y un Monto.");
+
+        repoItemsList.push({ sucursal: suc, caja: caja, responsable: resp, monto: monto });
+        
+        document.getElementById('repo-add-caja').value = ''; document.getElementById('repo-add-resp').value = ''; document.getElementById('repo-add-monto').value = '';
+        renderRepoItems();
+    }
+
+    function removeRepoItem(index) { repoItemsList.splice(index, 1); renderRepoItems(); }
+
+    function renderRepoItems() {
+        const tbody = document.getElementById('repo-items-body'); tbody.innerHTML = '';
+        let total = 0;
+        repoItemsList.forEach((item, index) => {
+            total += item.monto;
+            tbody.insertAdjacentHTML('beforeend', `<tr class="border-b"><td class="p-2">${item.sucursal}</td><td class="p-2 font-bold">${item.caja}</td><td class="p-2">${item.responsable}</td><td class="p-2 text-right font-bold">${item.monto.toLocaleString('es-PY')}</td><td class="p-2 text-center"><button onclick="removeRepoItem(${index})" class="text-red-500 hover:bg-red-50 p-1 rounded">X</button></td></tr>`);
+        });
+        document.getElementById('repo-total-header').textContent = `Total: ${total.toLocaleString('es-PY')} Gs`;
+        calcTotals();
+    }
+
+    // Funciones Proveedor
+    function searchProvider() {
+        const ruc = document.getElementById('prov-ruc-search').value;
+        currentProvider = MOCK_PROVIDERS.find(p => p.ruc === ruc);
+        const statusDiv = document.getElementById('timbrado-status');
+        const alertBox = document.getElementById('prov-pending-invoices');
+
+        if (currentProvider) {
+            document.getElementById('prov-name').value = currentProvider.name;
+            statusDiv.classList.remove('hidden');
+            
+            if(currentProvider.isElectronic || currentProvider.timbradoVence === 'Electrónico') {
+                 statusDiv.className = "text-xs px-3 h-9 rounded border flex items-center bg-blue-50 border-blue-200 text-blue-700 font-bold mt-1";
+                 statusDiv.innerHTML = `Facturador Electrónico OK`;
+            } else {
+                statusDiv.className = "text-xs px-3 h-9 rounded border flex items-center bg-green-50 border-green-200 text-green-700 mt-1";
+                statusDiv.innerHTML = `Timbrado Vence: ${currentProvider.timbradoVence}`;
+            }
+            
+            // BUSCAR FACTURAS PENDIENTES DE ESTE PROVEEDOR
+            const pending = MOCK_FACTURAS.filter(f => f.proveedor.toLowerCase() === currentProvider.name.toLowerCase() && (f.opId === 'S/OP' || !f.opId || f.opId === '') && !currentLinkedInvoices.includes(f.factura));
+            if(pending.length > 0) {
+                document.getElementById('prov-pending-count').textContent = pending.length;
+                alertBox.classList.remove('hidden');
+            } else {
+                alertBox.classList.add('hidden');
+            }
+            
+            calcTotals();
+        } else {
+            alert("Proveedor no encontrado. Use RUC: 80012345-1 o 80099887-2");
+            document.getElementById('prov-name').value = '';
+            statusDiv.classList.add('hidden');
+            if(alertBox) alertBox.classList.add('hidden');
+        }
+    }
+
+    function toggleInvoiceFields(hasInvoice) {
+        const btnVincular = document.getElementById('btn-vincular-fac');
+        const btnClear = document.getElementById('btn-clear-fac');
+        const btnAddConcept = document.getElementById('btn-add-op-concept');
+        const inputFactura = document.getElementById('op-factura-nro');
+        const isEdit = document.getElementById('op-edit-id').value !== '';
+
+        if (hasInvoice) {
+            if(!isEdit) {
+                inputFactura.value = '';
+                currentLinkedInvoices = [];
+            }
+            inputFactura.placeholder = 'Ninguna factura seleccionada...';
+            inputFactura.readOnly = true;
+            inputFactura.classList.remove('bg-gray-100', 'text-gray-500', 'cursor-not-allowed');
+            inputFactura.classList.add('bg-white', 'text-gray-800');
+            
+            if(btnVincular) btnVincular.disabled = false;
+            if(btnClear) btnClear.disabled = false;
+            if(btnAddConcept) btnAddConcept.classList.add('hidden');
+            if(!isEdit) document.getElementById('op-conceptos-body').innerHTML = ''; // Limpiar grilla para obligar a vincular
+        } else {
+            if(!isEdit) {
+                inputFactura.value = 'S/N';
+                currentLinkedInvoices = [];
+            }
+            inputFactura.placeholder = 'Sin documento';
+            inputFactura.readOnly = true;
+            inputFactura.classList.remove('bg-white', 'text-gray-800');
+            inputFactura.classList.add('bg-gray-100', 'text-gray-500', 'cursor-not-allowed');
+            
+            if(btnVincular) btnVincular.disabled = true;
+            if(btnClear) btnClear.disabled = true;
+            if(btnAddConcept) btnAddConcept.classList.remove('hidden');
+            if(!isEdit) {
+                document.getElementById('op-conceptos-body').innerHTML = '';
+                addOpConceptRow(); // Añadir línea manual para cargar concepto interno
+            }
+        }
+        calcTotals();
+    }
+
+    function clearLinkedInvoices() {
+        if(currentLinkedInvoices.length === 0) return;
+        if(confirm("¿Desea desvincular las facturas actuales y limpiar la grilla?")) {
+            currentLinkedInvoices = [];
+            document.getElementById('op-factura-nro').value = '';
+            document.getElementById('op-conceptos-body').innerHTML = '';
+            calcTotals();
+            
+            // Re-evaluar facturas pendientes para mostrar el banner si aplica
+            if(currentProvider) searchProvider();
+        }
+    }
+
+    function togglePaymentFields() {
+        const method = document.getElementById('op-medio-pago').value;
+        document.getElementById('check-fields').classList.toggle('hidden', method === 'Efectivo');
+    }
+
+    // Funciones Guardado
+    function confirmOrder() {
+        const tipoOrden = document.getElementById('op-tipo-orden').value;
+        const isRepo = tipoOrden.includes('REPOSICION');
+
+        if (!isRepo && !currentProvider) return alert("Debe seleccionar un proveedor válido.");
+        if (isRepo && repoItemsList.length === 0) return alert("Debe agregar al menos una Caja.");
+        if (!document.getElementById('op-auth-level').value) return alert("Seleccione el Nivel de Autorización.");
+        
+        const total = document.getElementById('op-total-display').textContent;
+        const editId = document.getElementById('op-edit-id').value;
+        
+        let finalProviderName = isRepo ? 'Múltiples Cajas' : currentProvider.name;
+        let finalRuc = isRepo ? 'S/RUC' : currentProvider.ruc;
+        
+        const formData = {
+            date: new Date().toISOString().split('T')[0],
+            tipo: tipoOrden, provider: finalProviderName, ruc: finalRuc,
+            method: document.getElementById('op-medio-pago').value,
+            amount: parseInt(total.replace(/\D/g,'')), user: 'JPerez',
+            status: document.getElementById('op-status-select').value || 'Pendiente',
+            invoice: isRepo ? '' : currentLinkedInvoices.join(', '), // Múltiples facturas
+        };
+
+        if (isRepo) {
+            formData.repoItems = [...repoItemsList];
+        } else {
+            // Extraer grilla de conceptos
+            const conceptos = [];
+            document.querySelectorAll('#op-conceptos-body .item-concept-row').forEach(tr => {
+                const cuentaVal = tr.querySelector('.val-cuenta').value;
+                const cantVal = parseFloat(tr.querySelector('.val-cant').value) || 0;
+                const precioVal = parseInt(tr.querySelector('.val-precio').value.replace(/\D/g, '')) || 0;
+                const tipoIvaVal = tr.querySelector('.val-tipo-iva').value;
+                if(cuentaVal || (cantVal > 0 && precioVal > 0)) {
+                    conceptos.push({
+                        cod: tr.querySelector('.val-cod').value,
+                        desc: tr.querySelector('.val-desc').value,
+                        cuenta: cuentaVal, cant: cantVal, precio: precioVal, tipoIva: tipoIvaVal,
+                        exenta: parseInt(tr.querySelector('.val-exenta').value.replace(/\D/g, '')) || 0,
+                        iva5: parseInt(tr.querySelector('.val-iva5').value.replace(/\D/g, '')) || 0,
+                        iva10: parseInt(tr.querySelector('.val-iva10').value.replace(/\D/g, '')) || 0
+                    });
+                }
+            });
+            if(conceptos.length === 0) return alert("Debe agregar al menos un concepto a la factura.");
+            formData.conceptos = conceptos;
+        }
+
+        if(editId) {
+            const index = MOCK_ORDERS.findIndex(o => o.id === editId);
+            if(index !== -1) MOCK_ORDERS[index] = { ...MOCK_ORDERS[index], ...formData };
+            alert(`Orden ${editId} actualizada.`);
+            
+            // Actualizar referencias en las facturas mockeadas
+            if (!isRepo && currentLinkedInvoices.length > 0) {
+                currentLinkedInvoices.forEach(invNro => {
+                    const fIndex = MOCK_FACTURAS.findIndex(f => f.factura === invNro);
+                    if (fIndex !== -1) MOCK_FACTURAS[fIndex].opId = editId;
+                });
+            }
+        } else {
+            formData.id = 'OP-' + (MOCK_ORDERS.length + 1).toString().padStart(3, '0');
+            MOCK_ORDERS.unshift(formData);
+            alert(`Orden de Pago ${formData.id} generada.`);
+            
+            // Actualizar referencias en las facturas mockeadas
+            if (!isRepo && currentLinkedInvoices.length > 0) {
+                currentLinkedInvoices.forEach(invNro => {
+                    const fIndex = MOCK_FACTURAS.findIndex(f => f.factura === invNro);
+                    if (fIndex !== -1) MOCK_FACTURAS[fIndex].opId = formData.id;
+                });
+            }
+        }
+        switchView('ordenes-pago');
+    }
+
+    function cancelOrder() { switchView('ordenes-pago'); }
+
+    // --- IMPRESIÓN ---
+    function printOrderMock(id) {
+        document.getElementById('print-content-single').classList.remove('hidden');
+        document.getElementById('print-content-list').classList.add('hidden');
+        
+        const op = MOCK_ORDERS.find(o => o.id === id);
+        if(!op) return;
+
+        document.getElementById('print-op-num').textContent = op.id;
+        document.getElementById('print-op-ref').textContent = op.id;
+        document.getElementById('print-date').textContent = op.date;
+        document.getElementById('print-provider').textContent = op.provider;
+        document.getElementById('print-ruc').textContent = op.ruc;
+        document.getElementById('print-invoice').textContent = op.invoice || 'N/A';
+        document.getElementById('print-method').textContent = op.method;
+
+        // Imprimir grilla de conceptos dinámica
+        const printTbody = document.getElementById('print-conceptos-body');
+        printTbody.innerHTML = '';
+        if(op.conceptos) {
+            op.conceptos.forEach(c => {
+                const sub = (c.exenta || 0) + (c.iva5 || 0) + (c.iva10 || 0);
+                printTbody.innerHTML += `<tr><td class="border border-black p-1 text-center">${c.cant}</td><td class="border border-black p-1">${c.desc} <br><span class="text-[10px] text-gray-500">${c.cuenta}</span></td><td class="border border-black p-1 text-right font-mono">${sub.toLocaleString('es-PY')}</td></tr>`;
+            });
+        } else if (op.repoItems) {
+             op.repoItems.forEach(c => {
+                 printTbody.innerHTML += `<tr><td class="border border-black p-1 text-center">1</td><td class="border border-black p-1">Reposición: Caja ${c.caja} (${c.sucursal})</td><td class="border border-black p-1 text-right font-mono">${c.monto.toLocaleString('es-PY')}</td></tr>`;
+             });
+        }
+
+        document.getElementById('print-total').textContent = op.amount.toLocaleString('es-PY');
+        document.getElementById('print-total-text').textContent = op.amount.toLocaleString('es-PY');
+
+        document.getElementById('modal-print').classList.remove('hidden');
+    }
+
+    function printDailyReport() {
+        document.getElementById('print-content-single').classList.add('hidden');
+        document.getElementById('print-content-list').classList.remove('hidden');
+        
+        const tbody = document.getElementById('report-table-body'); tbody.innerHTML = '';
+        let total = 0; document.getElementById('report-print-date').textContent = new Date().toLocaleDateString('es-PY');
+
+        MOCK_ORDERS.forEach(op => {
+            total += op.amount;
+            tbody.insertAdjacentHTML('beforeend', `<tr class="border-b border-gray-300"><td class="p-2 border border-black">${op.id}</td><td class="p-2 border border-black">${op.date}</td><td class="p-2 border border-black">${op.provider}</td><td class="p-2 border border-black text-center">${op.method}</td><td class="p-2 border border-black text-center">${op.status}</td><td class="p-2 border border-black text-right">${op.amount.toLocaleString('es-PY')}</td></tr>`);
+        });
+        document.getElementById('report-total-amount').textContent = total.toLocaleString('es-PY') + " Gs";
+        document.getElementById('modal-print').classList.remove('hidden');
+    }
+
+    // --- MODAL PROVEEDORES Y REGISTRO ---
+    function openProviderModal() { 
+        document.getElementById('modal-provider').classList.remove('hidden'); 
+        renderProvidersTable();
+    }
+    
+    function toggleElectronicBiller() { 
+        const isElec = document.getElementById('new-prov-electronic').checked;
+        const vtoInput = document.getElementById('new-prov-vto');
+        vtoInput.disabled = isElec;
+        if(isElec) {
+            vtoInput.value = '';
+            vtoInput.classList.add('bg-gray-100');
+        } else {
+            vtoInput.classList.remove('bg-gray-100');
+        }
+    }
+
+    function renderProvidersTable() {
+        const tbody = document.getElementById('provider-list-body');
+        tbody.innerHTML = '';
+        MOCK_PROVIDERS.forEach(p => {
+            const timbradoText = p.isElectronic ? '<span class="text-blue-600 font-bold text-[10px] bg-blue-50 px-2 py-0.5 rounded">Electrónico</span>' : p.timbrado;
+            tbody.insertAdjacentHTML('beforeend', `
+                <tr class="hover:bg-gray-50 transition-colors">
+                    <td class="p-3 font-mono text-gray-600">${p.ruc}</td>
+                    <td class="p-3 font-bold text-gray-800">${p.name}</td>
+                    <td class="p-3">${timbradoText}</td>
+                    <td class="p-3 text-center">
+                        <button onclick="selectProviderFromModal('${p.ruc}')" class="bg-blue-100 text-blue-700 px-3 py-1.5 rounded text-xs hover:bg-blue-200 font-bold transition-colors shadow-sm">Seleccionar</button>
+                    </td>
+                </tr>
+            `);
+        });
+    }
+
+    function saveNewProvider() {
+        const ruc = document.getElementById('new-prov-ruc').value.trim();
+        const name = document.getElementById('new-prov-name').value.trim().toUpperCase();
+        const isElec = document.getElementById('new-prov-electronic').checked;
+        const timbrado = document.getElementById('new-prov-timbrado').value.trim();
+        const vto = document.getElementById('new-prov-vto').value;
+
+        if(!ruc || !name || (!isElec && (!timbrado || !vto))) {
+            alert("Atención: Complete los campos obligatorios (*) del proveedor.");
+            return;
+        }
+
+        if(MOCK_PROVIDERS.find(p => p.ruc === ruc)) {
+            alert("Atención: Ya existe un proveedor registrado con este RUC.");
+            return;
+        }
+
+        // Registrar
+        MOCK_PROVIDERS.unshift({
+            ruc: ruc,
+            name: name,
+            timbrado: timbrado || '99999999',
+            timbradoVence: isElec ? 'Electrónico' : vto,
+            acumuladoMes: 0,
+            isElectronic: isElec
+        });
+
+        alert("Proveedor registrado exitosamente.");
+        
+        // Limpiar formulario
+        document.getElementById('new-prov-ruc').value = '';
+        document.getElementById('new-prov-name').value = '';
+        document.getElementById('new-prov-electronic').checked = false;
+        document.getElementById('new-prov-timbrado').value = '';
+        document.getElementById('new-prov-vto').value = '';
+        toggleElectronicBiller();
+
+        // Refrescar grilla interna del modal
+        renderProvidersTable();
+    }
+
+    function selectProviderFromModal(ruc) {
+        document.getElementById('modal-provider').classList.add('hidden');
+        
+        // Determinar qué formulario está abierto para inyectar el RUC
+        const isFacturasFormActive = !document.getElementById('facturas-form-view').classList.contains('hidden-section');
+        const isOrdenesFormActive = !document.getElementById('ordenes-pago-form-view').classList.contains('hidden-section');
+
+        if(isFacturasFormActive) {
+            document.getElementById('fac-prov-ruc').value = ruc;
+            searchFacProvider(); // Auto-disparar la búsqueda
+        } else if (isOrdenesFormActive) {
+            document.getElementById('prov-ruc-search').value = ruc;
+            searchProvider(); // Auto-disparar la búsqueda
+        }
+    }
+
+    // --- MÓDULO RECEPCIÓN DE FACTURAS ---
+    function renderFacturas() {
+        const tbody = document.getElementById('facturas-table-body');
+        if (!tbody) return;
+        tbody.innerHTML = '';
+        const search = document.getElementById('facturas-search').value.toLowerCase();
+        const statusFilter = document.getElementById('facturas-filter-estado').value;
+
+        MOCK_FACTURAS.forEach(f => {
+            if (search && !f.proveedor.toLowerCase().includes(search) && !f.factura.toLowerCase().includes(search) && !f.opId.toLowerCase().includes(search)) return;
+            if (statusFilter && f.estado !== statusFilter) return;
+
+            const estadoBadge = f.estado === 'recibido' 
+                ? '<span class="bg-green-100 text-green-800 text-[10px] px-2 py-0.5 rounded font-bold flex items-center justify-center w-max mx-auto"><svg class="w-3 h-3 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path></svg> Recibido</span>'
+                : '<span class="bg-yellow-100 text-yellow-800 text-[10px] px-2 py-0.5 rounded font-bold flex items-center justify-center w-max mx-auto"><svg class="w-3 h-3 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg> Pendiente</span>';
+            
+            const btnAccion = f.estado === 'pendiente'
+                ? `<button onclick="receiveOriginal('${f.opId}')" class="text-[10px] bg-yoayu-green text-white px-3 py-1.5 rounded hover:bg-yoayu-dark transition-colors font-bold shadow-sm">Marcar Recibido</button>`
+                : `<button onclick="revertOriginal('${f.opId}')" class="text-[10px] bg-gray-100 text-gray-600 px-3 py-1.5 rounded hover:bg-gray-200 transition-colors border border-gray-300">Deshacer</button>`;
+
+            tbody.insertAdjacentHTML('beforeend', `
+                <tr class="hover:bg-gray-50 border-b transition-colors h-14">
+                    <td class="p-4 text-xs font-bold text-gray-800">${f.opId}</td>
+                    <td class="p-4 text-xs text-gray-700">${f.proveedor}</td>
+                    <td class="p-4 text-xs font-mono text-gray-600">${f.factura}</td>
+                    <td class="p-4 text-right text-xs font-bold text-gray-800">${f.monto.toLocaleString('es-PY')}</td>
+                    <td class="p-4 text-center">${estadoBadge}</td>
+                    <td class="p-4 text-center">${btnAccion}</td>
+                </tr>
+            `);
+        });
+    }
+
+    function receiveOriginal(opId) {
+        const index = MOCK_FACTURAS.findIndex(f => f.opId === opId);
+        if (index !== -1) {
+            MOCK_FACTURAS[index].estado = 'recibido';
+            renderFacturas();
+        }
+    }
+
+    function revertOriginal(opId) {
+        const index = MOCK_FACTURAS.findIndex(f => f.opId === opId);
+        if (index !== -1) {
+            MOCK_FACTURAS[index].estado = 'pendiente';
+            renderFacturas();
+        }
+    }
+
+    // --- VINCULACIÓN DE FACTURAS EN ÓRDENES DE PAGO ---
+    function openFacturasOpModal() {
+        if (!currentProvider) {
+            alert("Atención: Primero debe buscar y seleccionar un Proveedor (Paso 1).");
+            return;
+        }
+        
+        const tbody = document.getElementById('modal-facturas-op-body');
+        tbody.innerHTML = '';
+        document.getElementById('modal-facturas-op-subtitle').textContent = `Proveedor: ${currentProvider.name}`;
+        
+        // Filtrar SOLO facturas que NO tienen Orden de Pago (S/OP o vacío) y NO estén ya vinculadas
+        const facturasProv = MOCK_FACTURAS.filter(f => 
+            f.proveedor.toLowerCase() === currentProvider.name.toLowerCase() &&
+            (f.opId === 'S/OP' || !f.opId || f.opId === '') &&
+            !currentLinkedInvoices.includes(f.factura)
+        );
+        
+        if (facturasProv.length === 0) {
+            tbody.innerHTML = '<tr><td colspan="4" class="p-6 text-center text-gray-500 text-sm">No hay facturas previamente cargadas en Recepción sin OP para este proveedor.</td></tr>';
+        } else {
+            facturasProv.forEach(f => {
+                const estadoBadge = f.estado === 'recibido' 
+                    ? '<span class="bg-green-100 text-green-800 text-[10px] px-2 py-0.5 rounded font-bold">Recibido</span>'
+                    : '<span class="bg-yellow-100 text-yellow-800 text-[10px] px-2 py-0.5 rounded font-bold">Pendiente</span>';
+
+                tbody.insertAdjacentHTML('beforeend', `
+                    <tr class="hover:bg-gray-50 transition-colors">
+                        <td class="p-3 font-mono text-gray-700">${f.factura}</td>
+                        <td class="p-3 text-center">${estadoBadge}</td>
+                        <td class="p-3 text-right font-bold text-gray-800">${f.monto.toLocaleString('es-PY')} Gs</td>
+                        <td class="p-3 text-center">
+                            <button type="button" onclick="vincularFacturaOp('${f.factura}')" class="bg-blue-600 text-white px-3 py-1.5 rounded text-xs font-bold hover:bg-blue-700 shadow-sm transition-transform active:scale-95">Seleccionar</button>
+                        </td>
+                    </tr>
+                `);
+            });
+        }
+        
+        document.getElementById('modal-facturas-op').classList.remove('hidden');
+    }
+
+    function vincularFacturaOp(facturaNro) {
+        if(currentLinkedInvoices.includes(facturaNro)) return;
+
+        // Añadir a la lista
+        currentLinkedInvoices.push(facturaNro);
+        document.getElementById('op-factura-nro').value = currentLinkedInvoices.join(', ');
+        
+        // Buscar factura para extraer conceptos
+        const fac = MOCK_FACTURAS.find(f => f.factura === facturaNro);
+        
+        // NO limpiar la grilla, solo agregar
+        // const tbody = document.getElementById('op-conceptos-body');
+        // tbody.innerHTML = ''; 
+        
+        if (fac && fac.conceptos && fac.conceptos.length > 0) {
+            fac.conceptos.forEach(c => {
+                addOpConceptRow(c, true); // Se pasa true para bloquear los inputs
+            });
+        } else {
+            // Fallback si la factura antigua no tenía detalles
+            addOpConceptRow({ desc: 'Pago Factura N° ' + facturaNro, cant: 1, precio: fac ? fac.monto : 0, iva10: fac ? fac.monto : 0 }, true);
+        }
+        
+        calcTotals();
+        document.getElementById('modal-facturas-op').classList.add('hidden');
+        
+        // Actualizar banner de facturas pendientes
+        searchProvider(); 
+    }
+
+    // --- LÓGICA DE LA IMAGEN / ADJUNTO ---
+    function handleFacFileSelect(input) {
+        if (input.files && input.files[0]) {
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                document.getElementById('fac-upload-placeholder').classList.add('hidden');
+                document.getElementById('fac-upload-preview').classList.remove('hidden');
+                const content = document.getElementById('fac-preview-content');
+                if (input.files[0].type.includes('image')) {
+                    content.innerHTML = `<img src="${e.target.result}" class="max-h-full max-w-full object-contain rounded">`;
+                } else {
+                    content.innerHTML = `<div class="text-center text-red-600 font-bold"><svg class="w-10 h-10 mx-auto text-red-500 mb-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 21h10a2 2 0 002-2V9.414a1 1 0 00-.293-.707l-5.414-5.414A1 1 0 0012.586 3H7a2 2 0 00-2 2v14a2 2 0 002 2z"></path></svg>Documento PDF</div>`;
+                }
+            }
+            reader.readAsDataURL(input.files[0]);
+        }
+    }
+
+    function removeFacFile(e) {
+        if(e) { e.stopPropagation(); e.preventDefault(); }
+        document.getElementById('fac-invoice-file').value = '';
+        document.getElementById('fac-upload-placeholder').classList.remove('hidden');
+        document.getElementById('fac-upload-preview').classList.add('hidden');
+        document.getElementById('fac-preview-content').innerHTML = '';
+    }
+
+    // --- LÓGICA DE LA GRILLA DE DETALLE FACTURAS ---
+    function addFacConceptRow(item = {}) {
+        const tbody = document.getElementById('fac-conceptos-body');
+        const tr = document.createElement('tr');
+        tr.className = "hover:bg-gray-50 fac-concept-row";
+        
+        let selectCuenta = `<input type="text" list="lista-cuentas" class="w-full min-w-[140px] h-8 text-[11px] border-gray-300 rounded focus:ring-yoayu-green val-cuenta" placeholder="🔍 Buscar..." value="${item.cuenta || ''}">`;
+        let selectUM = `<select class="w-[60px] h-8 text-[11px] border-gray-300 rounded focus:ring-yoayu-green val-um"><option value="UNI">UNI</option><option value="KGS">KGS</option><option value="LTS">LTS</option><option value="MTS">MTS</option><option value="GLB">GLB</option></select>`;
+        let selectIva = `<select class="w-16 h-8 text-[11px] border-blue-200 bg-blue-50/50 rounded focus:ring-blue-500 val-tipo-iva text-blue-800 font-bold" onchange="calcRowFac(this)"><option value="10" ${item.tipoIva === '10' || !item.tipoIva ? 'selected' : ''}>10%</option><option value="5" ${item.tipoIva === '5' ? 'selected' : ''}>5%</option><option value="EX" ${item.tipoIva === 'EX' ? 'selected' : ''}>EX</option></select>`;
+
+        tr.innerHTML = `
+            <td class="p-2 border-r border-b border-gray-100"><input type="text" class="w-14 h-8 text-[11px] border-gray-300 rounded text-center val-cod" placeholder="Cod" value="${item.cod || ''}"></td>
+            <td class="p-2 border-r border-b border-gray-100"><input type="text" class="w-full min-w-[150px] h-8 text-[11px] border-gray-300 rounded focus:ring-yoayu-green val-desc" placeholder="Descripción del ítem" value="${item.desc || ''}"></td>
+            <td class="p-2 border-r border-b border-gray-100">${selectCuenta}</td>
+            <td class="p-2 border-r border-b border-gray-100 text-center">${selectUM}</td>
+            <td class="p-2 border-r border-b border-gray-100"><input type="number" class="w-14 h-8 text-[11px] border-gray-300 rounded text-center val-cant" value="${item.cant || 1}" min="1" oninput="calcRowFac(this)"></td>
+            <td class="p-2 border-r border-b border-gray-100"><input type="text" class="w-full min-w-[70px] h-8 text-[11px] border-gray-300 rounded text-right val-precio font-medium" placeholder="0" value="${item.precio ? item.precio.toLocaleString('es-PY') : ''}" oninput="formatNumberInput(this); calcRowFac(this)"></td>
+            <td class="p-2 border-r border-b border-gray-100"><input type="text" class="w-full min-w-[70px] h-8 text-[11px] border-gray-300 rounded text-right val-desc-monto text-red-500" placeholder="0" value="${item.descuento ? item.descuento.toLocaleString('es-PY') : ''}" oninput="formatNumberInput(this); calcRowFac(this)"></td>
+            <td class="p-2 border-r border-b border-gray-200 text-center bg-blue-50/30">${selectIva}</td>
+            
+            <td class="p-2 border-r border-b border-gray-100 bg-gray-50"><input type="text" class="w-full min-w-[70px] h-8 text-[11px] border-gray-300 rounded text-right val-exenta text-gray-600" placeholder="0" value="${item.exenta ? item.exenta.toLocaleString('es-PY') : ''}" oninput="formatNumberInput(this); calcFacTotals()"></td>
+            <td class="p-2 border-r border-b border-gray-100 bg-gray-50"><input type="text" class="w-full min-w-[70px] h-8 text-[11px] border-gray-300 rounded text-right val-iva5 text-gray-600" placeholder="0" value="${item.iva5 ? item.iva5.toLocaleString('es-PY') : ''}" oninput="formatNumberInput(this); calcFacTotals()"></td>
+            <td class="p-2 border-b border-gray-100 bg-green-50"><input type="text" class="w-full min-w-[80px] h-8 text-[11px] border-green-200 rounded text-right val-iva10 font-bold text-yoayu-green focus:ring-yoayu-green focus:border-yoayu-green" placeholder="0" value="${item.iva10 ? item.iva10.toLocaleString('es-PY') : ''}" oninput="formatNumberInput(this); calcFacTotals()"></td>
+            
+            <td class="p-2 border-b text-center align-middle"><button type="button" onclick="this.closest('tr').remove(); calcFacTotals();" class="text-red-500 hover:text-red-700 hover:bg-red-50 p-1.5 rounded transition-colors" title="Eliminar Línea"><svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path></svg></button></td>
+        `;
+        tbody.appendChild(tr);
+    }
+
+    function calcRowFac(input) {
+        const tr = input.closest('tr');
+        const cant = parseFloat(tr.querySelector('.val-cant').value) || 0;
+        const precio = parseInt(tr.querySelector('.val-precio').value.replace(/\D/g, '')) || 0;
+        const descuento = parseInt(tr.querySelector('.val-desc-monto').value.replace(/\D/g, '')) || 0;
+        const tipoIva = tr.querySelector('.val-tipo-iva').value;
+        
+        let subtotal = (cant * precio) - descuento;
+        if(subtotal < 0) subtotal = 0;
+        
+        tr.querySelector('.val-iva10').value = '';
+        tr.querySelector('.val-iva5').value = '';
+        tr.querySelector('.val-exenta').value = '';
+
+        // Autocompletar columna correspondiente al tipo de IVA seleccionado
+        if(subtotal > 0) {
+            if (tipoIva === '10') tr.querySelector('.val-iva10').value = subtotal.toLocaleString('es-PY');
+            else if (tipoIva === '5') tr.querySelector('.val-iva5').value = subtotal.toLocaleString('es-PY');
+            else if (tipoIva === 'EX') tr.querySelector('.val-exenta').value = subtotal.toLocaleString('es-PY');
+        }
+        calcFacTotals();
+    }
+
+    function calcFacTotals() {
+        let total10 = 0, total5 = 0, totalEx = 0;
+        
+        document.querySelectorAll('#fac-conceptos-body .fac-concept-row').forEach(tr => {
+            total10 += parseInt(tr.querySelector('.val-iva10').value.replace(/\D/g, '')) || 0;
+            total5 += parseInt(tr.querySelector('.val-iva5').value.replace(/\D/g, '')) || 0;
+            totalEx += parseInt(tr.querySelector('.val-exenta').value.replace(/\D/g, '')) || 0;
+        });
+
+        let subtotal = total10 + total5 + totalEx;
+        let iva10 = Math.round(total10 / 11);
+        let iva5 = Math.round(total5 / 21);
+        let totalIva = iva10 + iva5;
+
+        // Totales de bases
+        const el10 = document.getElementById('fac-summary-10');
+        if(el10) el10.textContent = total10.toLocaleString('es-PY');
+        const el5 = document.getElementById('fac-summary-5');
+        if(el5) el5.textContent = total5.toLocaleString('es-PY');
+        const elex = document.getElementById('fac-summary-ex');
+        if(elex) elex.textContent = totalEx.toLocaleString('es-PY');
+        
+        // Totales de liquidación de IVA
+        const elIva10 = document.getElementById('fac-iva-10');
+        if(elIva10) elIva10.textContent = iva10.toLocaleString('es-PY');
+        const elIva5 = document.getElementById('fac-iva-5');
+        if(elIva5) elIva5.textContent = iva5.toLocaleString('es-PY');
+        const elIvaTotal = document.getElementById('fac-iva-total');
+        if(elIvaTotal) elIvaTotal.textContent = totalIva.toLocaleString('es-PY');
+
+        // Total a pagar
+        const elTot = document.getElementById('fac-total-display');
+        if(elTot) elTot.textContent = subtotal.toLocaleString('es-PY') + ' Gs';
+    }
+
+    // --- FUNCIONES DEL FORMULARIO DE CARGA DE FACTURAS ---
+    function showFacturaForm() {
+        document.getElementById('facturas-view').classList.add('hidden-section');
+        document.getElementById('facturas-view').classList.remove('active');
+        document.getElementById('facturas-form-view').classList.remove('hidden-section');
+        document.getElementById('facturas-form-view').classList.add('active');
+        
+        // Limpiar el formulario
+        document.getElementById('fac-op-id').value = '';
+        document.getElementById('fac-prov-ruc').value = '';
+        document.getElementById('fac-prov-name').value = '';
+        document.getElementById('fac-timbrado').value = '';
+        document.getElementById('fac-numero').value = '';
+        document.getElementById('fac-estado').value = 'pendiente';
+        document.getElementById('fac-vto-timbrado').value = '';
+        document.getElementById('fac-electronica').checked = false;
+        toggleFacElectronica();
+        
+        // Limpiar adjunto
+        removeFacFile(new Event('click'));
+        
+        // Limpiar Grilla e inicializar con 1 fila
+        const tbody = document.getElementById('fac-conceptos-body');
+        if(tbody) {
+            tbody.innerHTML = '';
+            addFacConceptRow();
+            calcFacTotals();
+        }
+    }
+
+    function cancelFactura() {
+        document.getElementById('facturas-form-view').classList.add('hidden-section');
+        document.getElementById('facturas-form-view').classList.remove('active');
+        document.getElementById('facturas-view').classList.remove('hidden-section');
+        document.getElementById('facturas-view').classList.add('active');
+    }
+
+    function saveFactura() {
+        const opId = document.getElementById('fac-op-id').value || 'S/OP';
+        const ruc = document.getElementById('fac-prov-ruc').value;
+        const proveedor = document.getElementById('fac-prov-name').value;
+        const factura = document.getElementById('fac-numero').value;
+        const timbrado = document.getElementById('fac-timbrado').value;
+        const vtoTimbrado = document.getElementById('fac-vto-timbrado').value;
+        const isElectronica = document.getElementById('fac-electronica').checked;
+        const estado = document.getElementById('fac-estado').value;
+
+        // Obtener total calculado
+        const totalStr = document.getElementById('fac-total-display').textContent.replace(/\D/g, '');
+        const monto = parseInt(totalStr) || 0;
+        
+        const fileInput = document.getElementById('fac-invoice-file');
+        const hasImg = fileInput && fileInput.files && fileInput.files.length > 0;
+
+        if(!proveedor || !factura || !ruc || !timbrado) {
+            alert("Atención: Proveedor (RUC y Razón Social), N° de Factura y Timbrado son obligatorios.");
+            return;
+        }
+
+        if(!isElectronica && !vtoTimbrado) {
+            alert("Atención: Debe ingresar la fecha de vencimiento del timbrado para facturas físicas/preimpresas.");
+            return;
+        }
+        
+        if(monto <= 0) {
+            alert("Atención: Debe agregar al menos un concepto en la grilla.");
+            return;
+        }
+        
+        if(!hasImg) {
+            alert("Atención: Es obligatorio adjuntar la imagen o PDF del documento respaldatorio.");
+            return;
+        }
+
+        // --- NUEVO: Extraer conceptos para pasarlos a la Orden de Pago automáticamente ---
+        const conceptosFac = [];
+        document.querySelectorAll('#fac-conceptos-body .fac-concept-row').forEach(tr => {
+            conceptosFac.push({
+                cod: tr.querySelector('.val-cod').value,
+                desc: tr.querySelector('.val-desc').value,
+                cuenta: tr.querySelector('.val-cuenta').value,
+                cant: parseFloat(tr.querySelector('.val-cant').value) || 0,
+                precio: parseInt(tr.querySelector('.val-precio').value.replace(/\D/g, '')) || 0,
+                tipoIva: tr.querySelector('.val-tipo-iva').value,
+                exenta: parseInt(tr.querySelector('.val-exenta').value.replace(/\D/g, '')) || 0,
+                iva5: parseInt(tr.querySelector('.val-iva5').value.replace(/\D/g, '')) || 0,
+                iva10: parseInt(tr.querySelector('.val-iva10').value.replace(/\D/g, '')) || 0
+            });
+        });
+
+        // Registrar la factura en el Mock (Base de datos local en RAM)
+        MOCK_FACTURAS.unshift({
+            opId: opId, 
+            proveedor: proveedor, 
+            factura: factura, 
+            monto: monto, 
+            estado: estado,
+            hasImg: hasImg,
+            conceptos: conceptosFac
+        });
+
+        alert("Factura cargada y guardada exitosamente.");
+        cancelFactura();
+        renderFacturas(); // Refrescar grilla
+    }
+
+    function searchFacProvider() {
+        const ruc = document.getElementById('fac-prov-ruc').value;
+        const provider = MOCK_PROVIDERS.find(p => p.ruc === ruc);
+
+        if (provider) {
+            document.getElementById('fac-prov-name').value = provider.name;
+            if (provider.timbrado) {
+                document.getElementById('fac-timbrado').value = provider.timbrado;
+            }
+            if (provider.isElectronic || provider.timbradoVence === 'Electrónico') {
+                document.getElementById('fac-electronica').checked = true;
+            } else {
+                document.getElementById('fac-electronica').checked = false;
+                if(provider.timbradoVence) document.getElementById('fac-vto-timbrado').value = provider.timbradoVence;
+            }
+            toggleFacElectronica();
+        } else {
+            alert("Proveedor no encontrado. Pruebe con RUC: 80012345-1");
+            document.getElementById('fac-prov-name').value = '';
+            document.getElementById('fac-timbrado').value = '';
+            document.getElementById('fac-vto-timbrado').value = '';
+            document.getElementById('fac-electronica').checked = false;
+            toggleFacElectronica();
+        }
+    }
+
+    function toggleFacElectronica() {
+        const isElectronica = document.getElementById('fac-electronica').checked;
+        const vtoInput = document.getElementById('fac-vto-timbrado');
+        const reqAsterisk = document.getElementById('req-vto-timbrado');
+        
+        if (isElectronica) {
+            vtoInput.value = '';
+            vtoInput.disabled = true;
+            vtoInput.classList.add('bg-gray-100');
+            if(reqAsterisk) reqAsterisk.style.display = 'none';
+        } else {
+            vtoInput.disabled = false;
+            vtoInput.classList.remove('bg-gray-100');
+            if(reqAsterisk) reqAsterisk.style.display = 'inline';
+        }
+    }
+
+</script>
+</body>
+</html>
