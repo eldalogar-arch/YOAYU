@@ -1,0 +1,865 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Yoayu - Órdenes de Pago y Cheques</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        .yoayu-green { color: #007a33; }
+        .bg-yoayu-green { background-color: #007a33; }
+        .ring-yoayu-green:focus { --tw-ring-color: #007a33; }
+        .border-yoayu-green:focus { border-color: #007a33; }
+        .hover-bg-yoayu-green:hover { background-color: #006229; }
+        .required-asterisk { color: #dc2626; font-weight: bold; }
+        .modal-backdrop { background-color: rgba(0, 0, 0, 0.5); }
+        .tab-active { border-bottom: 2px solid #007a33; color: #007a33; font-weight: bold; }
+        .tab-inactive { color: #6b7280; }
+        .tab-inactive:hover { color: #374151; }
+    </style>
+</head>
+<body class="bg-gray-100 flex h-screen font-sans text-sm">
+
+    <!-- SIDEBAR -->
+    <aside class="w-64 bg-white border-r shadow-md flex flex-col hidden md:flex">
+        <div class="h-16 flex items-center justify-center border-b bg-gray-50">
+            <h1 class="text-xl font-extrabold yoayu-green tracking-wider">YOAYU ERP</h1>
+        </div>
+        <nav class="flex-1 p-4 space-y-2 overflow-y-auto">
+            <a href="#" onclick="showSection('dashboard')" class="flex items-center gap-3 px-3 py-2 text-gray-700 hover:bg-gray-100 rounded transition-colors">
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"></path></svg>
+                Inicio
+            </a>
+            <a href="#" onclick="showSection('documentos')" class="flex items-center gap-3 px-3 py-2 text-gray-700 hover:bg-gray-100 rounded transition-colors">
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path></svg>
+                Carga Documentos
+            </a>
+            <a href="#" onclick="showSection('ordenes')" class="flex items-center gap-3 px-3 py-2 text-gray-700 hover:bg-gray-100 rounded transition-colors">
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"></path></svg>
+                Órdenes de Pago
+            </a>
+            <!-- NUEVO MODULO DE CHEQUES -->
+            <a href="#" onclick="showSection('cheques')" class="flex items-center gap-3 px-3 py-2 bg-green-50 yoayu-green font-bold rounded transition-colors border-l-4 border-yoayu-green" id="menu-cheques">
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 9V7a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2m2 4h10a2 2 0 002-2v-6a2 2 0 00-2-2H9a2 2 0 00-2 2v6a2 2 0 002 2zm7-5a2 2 0 11-4 0 2 2 0 014 0z"></path></svg>
+                Gestión de Cheques
+            </a>
+        </nav>
+    </aside>
+
+    <!-- MAIN CONTENT -->
+    <main class="flex-1 flex flex-col overflow-hidden">
+        
+        <!-- HEADER -->
+        <header class="h-16 bg-white border-b flex items-center justify-between px-6 shadow-sm z-10">
+            <h2 id="header-title" class="text-xl font-bold text-gray-800">Sistema Yoayu</h2>
+            <div class="flex items-center gap-4">
+                <span class="text-sm font-medium text-gray-600">Usuario Activo</span>
+                <div class="w-8 h-8 rounded-full bg-yoayu-green text-white flex items-center justify-center font-bold">UA</div>
+            </div>
+        </header>
+
+        <!-- SECTIONS CONTAINER -->
+        <div class="flex-1 overflow-y-auto p-6 bg-gray-50" id="main-container">
+
+            <!-- ========================================== -->
+            <!-- SECCIÓN: CARGA DE DOCUMENTOS (MANTENIDA) -->
+            <!-- ========================================== -->
+            <section id="section-documentos" class="hidden max-w-6xl mx-auto space-y-6">
+                <div class="bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden">
+                    <div class="bg-gray-50 border-b px-6 py-4 flex justify-between items-center">
+                        <h2 class="text-lg font-bold text-gray-800 flex items-center gap-2">
+                            <svg class="w-5 h-5 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path></svg>
+                            Registro de Documentos de Proveedores
+                        </h2>
+                    </div>
+                    
+                    <div class="p-6">
+                        <div class="grid grid-cols-1 md:grid-cols-12 gap-6">
+                            <!-- Datos del Proveedor -->
+                            <div class="md:col-span-4 p-4 border rounded bg-gray-50">
+                                <h3 class="font-bold text-sm text-gray-700 mb-3 uppercase tracking-wider border-b pb-2">Proveedor</h3>
+                                <div class="space-y-3">
+                                    <div>
+                                        <label class="font-normal text-gray-600 text-xs">RUC <span class="required-asterisk">*</span></label>
+                                        <div class="flex mt-1 shadow-sm">
+                                            <input type="text" id="fac-prov-ruc" class="w-full rounded-l border-gray-300 focus:ring-yoayu-green h-9 text-sm" placeholder="Ej: 8000000-1">
+                                            <button type="button" onclick="alert('Buscando proveedor...')" class="bg-gray-200 text-gray-700 px-3 hover:bg-gray-300 transition-colors border border-l-0 border-gray-300 rounded-r flex items-center justify-center">
+                                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path></svg>
+                                            </button>
+                                        </div>
+                                    </div>
+                                    <div>
+                                        <label class="font-normal text-gray-600 text-xs">Razón Social</label>
+                                        <input type="text" id="fac-prov-name" class="bg-gray-100 border-gray-300 text-gray-700 mt-1 font-bold w-full h-9 text-sm rounded" readonly value="PROVEEDOR DE EJEMPLO S.A.">
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Datos Documento -->
+                            <div class="md:col-span-8 space-y-4">
+                                <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
+                                    <div>
+                                        <label class="font-normal text-gray-600 text-xs">Tipo Documento <span class="required-asterisk">*</span></label>
+                                        <select id="fac-tipo-doc" class="w-full mt-1 border-gray-300 focus:ring-yoayu-green h-9 text-sm font-bold text-yoayu-green rounded" onchange="toggleNotaCreditoFields()">
+                                            <option value="Factura">Factura</option>
+                                            <option value="Nota de Crédito">Nota de Crédito</option>
+                                            <option value="Nota de Débito">Nota de Débito</option>
+                                        </select>
+                                    </div>
+                                    <div>
+                                        <label class="font-normal text-gray-600 text-xs">Condición <span class="required-asterisk">*</span></label>
+                                        <select id="fac-condicion" class="w-full mt-1 border-gray-300 focus:ring-yoayu-green h-9 text-sm rounded">
+                                            <option value="Contado">Contado</option>
+                                            <option value="Crédito">Crédito</option>
+                                        </select>
+                                    </div>
+                                </div>
+                                
+                                <!-- RELACIÓN FACTURA (NC/ND) -->
+                                <div id="fac-relacionado-container" class="hidden p-3 bg-orange-50 border border-orange-200 rounded mt-2">
+                                    <label class="font-bold text-orange-800 text-xs block mb-1">Factura Afectada (Relacionada a este Documento) <span class="required-asterisk">*</span></label>
+                                    <div class="flex shadow-sm rounded">
+                                        <input type="text" id="fac-doc-relacionado" class="w-full rounded-none rounded-l border-orange-300 focus:ring-orange-500 h-9 text-sm bg-white text-gray-800 font-mono font-bold" readonly placeholder="Seleccione factura afectada...">
+                                        <button type="button" onclick="openRelacionarFacturaModal()" class="bg-orange-500 text-white px-4 hover:bg-orange-600 transition-colors flex items-center gap-2 text-xs font-bold rounded-r">
+                                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path></svg> Buscar
+                                        </button>
+                                        <button type="button" onclick="document.getElementById('fac-doc-relacionado').value=''" class="bg-red-50 text-red-600 px-3 hover:bg-red-100 border border-red-200 transition-colors rounded-r ml-1" title="Limpiar"><svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg></button>
+                                    </div>
+                                </div>
+
+                                <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                                    <div>
+                                        <label class="font-normal text-gray-600 text-xs">N° Comprobante <span class="required-asterisk">*</span></label>
+                                        <input type="text" id="fac-numero" class="w-full mt-1 border-gray-300 focus:ring-yoayu-green h-9 text-sm font-mono rounded" placeholder="001-001-0000000">
+                                    </div>
+                                    <div>
+                                        <label class="font-normal text-gray-600 text-xs">Monto Total (Gs.)</label>
+                                        <input type="number" id="fac-monto" class="w-full mt-1 border-gray-300 focus:ring-yoayu-green h-9 text-sm rounded font-bold" placeholder="0">
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="mt-6 flex justify-end gap-3 pt-4 border-t">
+                            <button type="button" class="px-5 py-2 border border-gray-300 text-gray-700 rounded shadow-sm hover:bg-gray-50 font-medium">Cancelar</button>
+                            <button type="button" onclick="alert('Documento guardado con éxito.')" class="bg-yoayu-green text-white px-5 py-2 rounded shadow-sm hover-bg-yoayu-green font-medium flex items-center gap-2">
+                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path></svg>
+                                Guardar Documento
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- ========================================== -->
+            <!-- SECCIÓN: ÓRDENES DE PAGO (MANTENIDA)       -->
+            <!-- ========================================== -->
+            <section id="section-ordenes" class="hidden max-w-6xl mx-auto space-y-6">
+                <div class="flex justify-between items-center mb-4">
+                    <h2 class="text-xl font-bold text-gray-800">Órdenes de Pago Generadas</h2>
+                    <button class="bg-yoayu-green text-white px-4 py-2 rounded shadow flex items-center gap-2 hover-bg-yoayu-green">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path></svg>
+                        Nueva OP
+                    </button>
+                </div>
+                
+                <div class="bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden">
+                    <table class="w-full text-left border-collapse">
+                        <thead>
+                            <tr class="bg-gray-100 border-b text-gray-600 text-xs uppercase tracking-wider">
+                                <th class="p-3 font-semibold">Nro OP</th>
+                                <th class="p-3 font-semibold">Fecha</th>
+                                <th class="p-3 font-semibold">Proveedor</th>
+                                <th class="p-3 font-semibold">Concepto</th>
+                                <th class="p-3 font-semibold text-right">Monto Total</th>
+                                <th class="p-3 font-semibold text-center">Forma Pago</th>
+                                <th class="p-3 font-semibold text-center">Estado</th>
+                                <th class="p-3 font-semibold text-center">Acciones</th>
+                            </tr>
+                        </thead>
+                        <tbody class="text-sm divide-y divide-gray-100">
+                            <!-- Ejemplo OP Pendiente (CHEQUE) -->
+                            <tr class="hover:bg-gray-50">
+                                <td class="p-3 font-mono font-bold text-gray-800">OP-2026-001</td>
+                                <td class="p-3">18/03/2026</td>
+                                <td class="p-3 font-medium">PROVEEDOR DE EJEMPLO S.A.</td>
+                                <td class="p-3 text-gray-500">Pago por insumos de oficina s/ Fact 001-001-123</td>
+                                <td class="p-3 text-right font-bold text-gray-800">5.500.000 Gs</td>
+                                <td class="p-3 text-center">
+                                    <span class="text-[10px] font-bold text-gray-600 bg-gray-100 px-2 py-1 rounded border uppercase tracking-wide">Cheque</span>
+                                </td>
+                                <td class="p-3 text-center">
+                                    <span class="px-2 py-1 bg-yellow-100 text-yellow-800 rounded-full text-xs font-bold">Aprobada</span>
+                                </td>
+                                <td class="p-3 text-center">
+                                    <button onclick="abrirModalEmitirCheque('OP-2026-001', 'PROVEEDOR DE EJEMPLO S.A.', 5500000)" class="bg-blue-600 text-white px-3 py-1.5 rounded text-xs font-bold hover:bg-blue-700 shadow-sm transition-transform active:scale-95 flex items-center justify-center gap-1 mx-auto" title="Emitir Cheque Físico">
+                                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 9V7a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2m2 4h10a2 2 0 002-2v-6a2 2 0 00-2-2H9a2 2 0 00-2 2v6a2 2 0 002 2zm7-5a2 2 0 11-4 0 2 2 0 014 0z"></path></svg>
+                                        Emitir Cheque
+                                    </button>
+                                </td>
+                            </tr>
+                            <!-- Ejemplo OP Aprobada (TRANSFERENCIA) -->
+                            <tr class="hover:bg-gray-50">
+                                <td class="p-3 font-mono font-bold text-gray-800">OP-2026-002</td>
+                                <td class="p-3">15/03/2026</td>
+                                <td class="p-3 font-medium">SERVICIOS INFORMATICOS SRL</td>
+                                <td class="p-3 text-gray-500">Mantenimiento de Servidores</td>
+                                <td class="p-3 text-right font-bold text-gray-800">12.000.000 Gs</td>
+                                <td class="p-3 text-center">
+                                    <span class="text-[10px] font-bold text-gray-600 bg-gray-100 px-2 py-1 rounded border uppercase tracking-wide">Transf.</span>
+                                </td>
+                                <td class="p-3 text-center">
+                                    <span class="px-2 py-1 bg-yellow-100 text-yellow-800 rounded-full text-xs font-bold">Aprobada</span>
+                                </td>
+                                <td class="p-3 text-center">
+                                    <!-- No hay botón de cheque, solo ver detalle -->
+                                    <button class="text-gray-500 hover:text-yoayu-green p-1.5 bg-gray-50 hover:bg-green-50 rounded border border-gray-200 transition-colors inline-flex justify-center" title="Ver Detalle / Gestionar Pago">
+                                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"></path></svg>
+                                    </button>
+                                </td>
+                            </tr>
+                            <!-- Ejemplo OP Aprobada (EFECTIVO) -->
+                            <tr class="hover:bg-gray-50">
+                                <td class="p-3 font-mono font-bold text-gray-800">OP-2026-003</td>
+                                <td class="p-3">19/03/2026</td>
+                                <td class="p-3 font-medium">LIMPIEZA TOTAL SRL</td>
+                                <td class="p-3 text-gray-500">Servicio Limpieza Mensual (Recibo Físico)</td>
+                                <td class="p-3 text-right font-bold text-gray-800">3.500.000 Gs</td>
+                                <td class="p-3 text-center">
+                                    <span class="text-[10px] font-bold text-gray-600 bg-gray-100 px-2 py-1 rounded border uppercase tracking-wide">Efectivo</span>
+                                </td>
+                                <td class="p-3 text-center">
+                                    <span class="px-2 py-1 bg-yellow-100 text-yellow-800 rounded-full text-xs font-bold">Aprobada</span>
+                                </td>
+                                <td class="p-3 text-center">
+                                    <!-- No hay botón de cheque, solo ver detalle -->
+                                    <button class="text-gray-500 hover:text-yoayu-green p-1.5 bg-gray-50 hover:bg-green-50 rounded border border-gray-200 transition-colors inline-flex justify-center" title="Ver Detalle / Gestionar Pago">
+                                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"></path></svg>
+                                    </button>
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </section>
+
+            <!-- ========================================== -->
+            <!-- NUEVA SECCIÓN: GESTIÓN DE CHEQUES          -->
+            <!-- ========================================== -->
+            <section id="section-cheques" class="max-w-6xl mx-auto space-y-6">
+                <div class="flex justify-between items-center mb-2">
+                    <h2 class="text-xl font-bold text-gray-800 flex items-center gap-2">
+                        <svg class="w-6 h-6 yoayu-green" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 9V7a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2m2 4h10a2 2 0 002-2v-6a2 2 0 00-2-2H9a2 2 0 00-2 2v6a2 2 0 002 2zm7-5a2 2 0 11-4 0 2 2 0 014 0z"></path></svg>
+                        Módulo de Gestión de Cheques
+                    </h2>
+                </div>
+
+                <!-- TABS -->
+                <div class="border-b border-gray-200">
+                    <nav class="-mb-px flex gap-6" aria-label="Tabs">
+                        <a href="#" onclick="switchChequeTab('chequeras')" id="tab-chequeras" class="tab-active whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm flex items-center gap-2">
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 002-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10"></path></svg>
+                            1. Chequeras (Configuración)
+                        </a>
+                        <a href="#" onclick="switchChequeTab('emitidos')" id="tab-emitidos" class="border-transparent tab-inactive whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm flex items-center gap-2">
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path></svg>
+                            2. Cheques Emitidos (Detalle)
+                        </a>
+                    </nav>
+                </div>
+
+                <!-- TAB CONTENT: CHEQUERAS -->
+                <div id="content-chequeras" class="space-y-4">
+                    <div class="flex justify-end">
+                        <button onclick="document.getElementById('modal-chequera').classList.remove('hidden')" class="bg-yoayu-green text-white px-4 py-2 rounded shadow flex items-center gap-2 hover-bg-yoayu-green font-bold text-sm">
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path></svg>
+                            Registrar Nueva Chequera
+                        </button>
+                    </div>
+                    <div class="bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden">
+                        <table class="w-full text-left border-collapse text-sm">
+                            <thead>
+                                <tr class="bg-gray-100 border-b text-gray-600 uppercase tracking-wider text-xs">
+                                    <th class="p-3 font-semibold">ID</th>
+                                    <th class="p-3 font-semibold">Cuenta Bancaria</th>
+                                    <th class="p-3 font-semibold">Tipo</th>
+                                    <th class="p-3 font-semibold">Serie</th>
+                                    <th class="p-3 font-semibold text-center">Rango Numeración</th>
+                                    <th class="p-3 font-semibold text-center">Último Usado</th>
+                                    <th class="p-3 font-semibold text-center">Estado</th>
+                                </tr>
+                            </thead>
+                            <tbody id="tabla-chequeras-body" class="divide-y divide-gray-100">
+                                <!-- Llenado por JS -->
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+
+                <!-- TAB CONTENT: CHEQUES EMITIDOS -->
+                <div id="content-emitidos" class="hidden space-y-4">
+                    <!-- Filtros y Acciones por Lote -->
+                    <div class="bg-white p-4 rounded-lg shadow-sm border border-gray-200 flex flex-wrap gap-4 items-end justify-between">
+                        <div class="flex gap-4 items-end flex-1">
+                            <div class="flex-1">
+                                <label class="text-xs text-gray-600 font-bold">Buscar por Beneficiario o Nro</label>
+                                <input type="text" id="filtro-cheque-texto" class="w-full mt-1 border-gray-300 rounded h-9 text-sm" placeholder="Ej: Juan Perez / 105">
+                            </div>
+                            <div>
+                                <label class="text-xs text-gray-600 font-bold">Chequera</label>
+                                <select id="filtro-cheque-chequera" class="w-full mt-1 border-gray-300 rounded h-9 text-sm min-w-[150px]">
+                                    <option value="">Todas las chequeras</option>
+                                    <!-- Llenado por JS -->
+                                </select>
+                            </div>
+                            <div>
+                                <label class="text-xs text-gray-600 font-bold">Estado</label>
+                                <select id="filtro-cheque-estado" class="w-full mt-1 border-gray-300 rounded h-9 text-sm min-w-[120px]">
+                                    <option value="">Todos</option>
+                                    <option value="Emitido">Emitido</option>
+                                    <option value="Cobrado">Cobrado</option>
+                                    <option value="Anulado">Anulado</option>
+                                </select>
+                            </div>
+                            <button onclick="renderChequesEmitidos()" class="bg-gray-800 text-white px-4 py-2 rounded shadow hover:bg-gray-700 font-bold text-sm h-9 flex items-center">
+                                Filtrar
+                            </button>
+                        </div>
+                        
+                        <!-- BOTÓN IMPRIMIR SELECCIONADOS -->
+                        <div class="border-l pl-4 border-gray-200 flex items-center">
+                            <button onclick="imprimirChequesSeleccionados()" class="bg-yoayu-green text-white px-4 py-2 rounded shadow hover:bg-yoayu-dark font-bold text-sm h-9 flex items-center gap-2 transition-colors">
+                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 17h2v2h-2zm0-4h2v2h-2zm0-4h2v2h-2zm-6 10h2v2h-2zm0-4h2v2h-2zm0-4h2v2h-2zm-4 4h2v2H7zm0-4h2v2H7z"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 9H7a2 2 0 00-2 2v6a2 2 0 002 2h10a2 2 0 002-2v-6a2 2 0 00-2-2zM7 9V5a2 2 0 012-2h6a2 2 0 012 2v4"></path></svg>
+                                Imprimir Lote (Seleccionados)
+                            </button>
+                        </div>
+                    </div>
+
+                    <div class="bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden">
+                        <table class="w-full text-left border-collapse text-sm">
+                            <thead>
+                                <tr class="bg-gray-100 border-b text-gray-600 uppercase tracking-wider text-xs">
+                                    <th class="p-3 font-semibold text-center w-12">
+                                        <input type="checkbox" id="chk-all-cheques" onchange="toggleAllCheques(this)" class="rounded text-yoayu-green focus:ring-yoayu-green cursor-pointer w-4 h-4">
+                                    </th>
+                                    <th class="p-3 font-semibold">Nro Cheque</th>
+                                    <th class="p-3 font-semibold">OP Ref.</th>
+                                    <th class="p-3 font-semibold">Beneficiario</th>
+                                    <th class="p-3 font-semibold">F. Emisión</th>
+                                    <th class="p-3 font-semibold">F. Pago</th>
+                                    <th class="p-3 font-semibold text-right">Monto</th>
+                                    <th class="p-3 font-semibold text-center">Estado</th>
+                                    <th class="p-3 font-semibold text-center">Acciones</th>
+                                </tr>
+                            </thead>
+                            <tbody id="tabla-cheques-body" class="divide-y divide-gray-100">
+                                <!-- Llenado por JS -->
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+
+            </section>
+
+        </div>
+    </main>
+
+    <!-- ========================================== -->
+    <!-- MODALES                                    -->
+    <!-- ========================================== -->
+
+    <!-- Modal: Relacionar Factura (NC/ND) -->
+    <div id="modal-facturas-relacionar" class="fixed inset-0 hidden overflow-y-auto h-full w-full modal-backdrop flex items-center justify-center z-50">
+        <div class="relative p-0 border w-full max-w-xl shadow-2xl rounded-lg bg-white flex flex-col">
+            <div class="bg-orange-500 text-white px-4 py-3 rounded-t-lg flex justify-between items-center">
+                <h3 class="font-bold flex items-center text-sm">
+                    <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path></svg>
+                    Vincular Documento Origen
+                </h3>
+                <button onclick="document.getElementById('modal-facturas-relacionar').classList.add('hidden')" class="text-white hover:text-orange-200 text-2xl font-bold">&times;</button>
+            </div>
+            <div class="p-4 bg-gray-50 flex-1 overflow-y-auto">
+                <p class="text-xs text-gray-500 mb-3 font-bold uppercase tracking-wide">Facturas del Proveedor actual</p>
+                <div class="overflow-hidden border border-gray-200 rounded">
+                    <table class="w-full text-left border-collapse bg-white text-sm">
+                        <thead>
+                            <tr class="bg-gray-100 border-b">
+                                <th class="p-3 font-bold text-gray-600">N° Factura</th>
+                                <th class="p-3 font-bold text-gray-600 text-right">Monto Total</th>
+                                <th class="p-3 font-bold text-gray-600 text-center">Acción</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr class="hover:bg-gray-50 transition-colors border-b">
+                                <td class="p-3 font-mono text-gray-700">001-001-0001234</td>
+                                <td class="p-3 text-right font-bold text-gray-800">1.500.000 Gs</td>
+                                <td class="p-3 text-center">
+                                    <button type="button" onclick="seleccionarFacturaRelacionada('001-001-0001234')" class="bg-orange-500 text-white px-3 py-1.5 rounded text-xs font-bold hover:bg-orange-600 shadow-sm transition-transform active:scale-95">Relacionar</button>
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal: Registrar Chequera -->
+    <div id="modal-chequera" class="fixed inset-0 hidden overflow-y-auto h-full w-full modal-backdrop flex items-center justify-center z-50">
+        <div class="relative p-0 border w-full max-w-2xl shadow-2xl rounded-lg bg-white flex flex-col">
+            <div class="bg-yoayu-green text-white px-4 py-3 rounded-t-lg flex justify-between items-center">
+                <h3 class="font-bold flex items-center text-sm">Alta de Nueva Chequera</h3>
+                <button onclick="document.getElementById('modal-chequera').classList.add('hidden')" class="text-white hover:text-green-200 text-2xl font-bold">&times;</button>
+            </div>
+            <div class="p-6">
+                <form id="form-chequera" class="space-y-4">
+                    <div class="grid grid-cols-2 gap-4">
+                        <div class="col-span-2 md:col-span-1">
+                            <label class="font-normal text-gray-600 text-xs">Cuenta Bancaria <span class="required-asterisk">*</span></label>
+                            <select id="chq-cuenta" class="w-full mt-1 border-gray-300 rounded h-9 text-sm" required>
+                                <option value="1">BNF - Cta: 123456/7</option>
+                                <option value="2">Itaú - Cta: 987654321</option>
+                            </select>
+                        </div>
+                        <div class="col-span-2 md:col-span-1">
+                            <label class="font-normal text-gray-600 text-xs">Tipo Chequera <span class="required-asterisk">*</span></label>
+                            <select id="chq-tipo" class="w-full mt-1 border-gray-300 rounded h-9 text-sm" required>
+                                <option value="Vista/Corriente">Vista/Corriente</option>
+                                <option value="Diferida">Diferida</option>
+                            </select>
+                        </div>
+                        <div>
+                            <label class="font-normal text-gray-600 text-xs">Serie (Opcional)</label>
+                            <input type="text" id="chq-serie" class="w-full mt-1 border-gray-300 rounded h-9 text-sm uppercase" placeholder="Ej: A">
+                        </div>
+                        <div>
+                            <label class="font-normal text-gray-600 text-xs">Fecha Recepción</label>
+                            <input type="date" id="chq-fecha" class="w-full mt-1 border-gray-300 rounded h-9 text-sm">
+                        </div>
+                        <div>
+                            <label class="font-normal text-gray-600 text-xs">Número Inicial <span class="required-asterisk">*</span></label>
+                            <input type="number" id="chq-inicial" class="w-full mt-1 border-gray-300 rounded h-9 text-sm" placeholder="Ej: 101" required>
+                        </div>
+                        <div>
+                            <label class="font-normal text-gray-600 text-xs">Número Final <span class="required-asterisk">*</span></label>
+                            <input type="number" id="chq-final" class="w-full mt-1 border-gray-300 rounded h-9 text-sm" placeholder="Ej: 150" required>
+                        </div>
+                    </div>
+                    <div class="bg-blue-50 p-3 rounded text-xs text-blue-800 border border-blue-200 mt-4">
+                        <i class="font-bold">Nota:</i> El sistema configurará automáticamente el "Último número usado" a uno antes del inicial para comenzar la secuencia correctamente. El estado será "Activa".
+                    </div>
+                    <div class="flex justify-end gap-3 pt-4 border-t mt-4">
+                        <button type="button" onclick="document.getElementById('modal-chequera').classList.add('hidden')" class="px-4 py-2 border rounded text-gray-600 hover:bg-gray-50">Cancelar</button>
+                        <button type="button" onclick="guardarChequera()" class="bg-yoayu-green text-white px-4 py-2 rounded shadow hover-bg-yoayu-green font-bold">Guardar Chequera</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal: Emitir Cheque desde OP -->
+    <div id="modal-emitir-cheque" class="fixed inset-0 hidden overflow-y-auto h-full w-full modal-backdrop flex items-center justify-center z-50">
+        <div class="relative p-0 border w-full max-w-2xl shadow-2xl rounded-lg bg-white flex flex-col">
+            <div class="bg-blue-600 text-white px-4 py-3 rounded-t-lg flex justify-between items-center">
+                <h3 class="font-bold flex items-center text-sm">Emisión de Cheque</h3>
+                <button onclick="document.getElementById('modal-emitir-cheque').classList.add('hidden')" class="text-white hover:text-blue-200 text-2xl font-bold">&times;</button>
+            </div>
+            <div class="p-6 bg-gray-50 flex-1">
+                
+                <!-- Info OP -->
+                <div class="bg-white p-3 rounded border border-gray-200 mb-4 grid grid-cols-2 gap-2 text-sm shadow-sm">
+                    <div><span class="text-gray-500 text-xs">Asociado a OP:</span> <br><strong id="emit-op" class="font-mono text-blue-700">--</strong></div>
+                    <div class="text-right"><span class="text-gray-500 text-xs">Monto a Pagar:</span> <br><strong id="emit-monto" class="text-lg">0 Gs</strong></div>
+                    <div class="col-span-2 border-t pt-2 mt-1"><span class="text-gray-500 text-xs">Beneficiario (Impreso en Cheque):</span> <br><input type="text" id="emit-beneficiario" class="w-full font-bold text-gray-800 bg-gray-50 border-0 p-1"></div>
+                </div>
+
+                <div class="grid grid-cols-2 gap-4">
+                    <div class="col-span-2">
+                        <label class="font-normal text-gray-600 text-xs">Chequera a utilizar <span class="required-asterisk">*</span></label>
+                        <select id="emit-chequera" class="w-full mt-1 border-gray-300 rounded h-9 text-sm font-bold text-gray-700" onchange="actualizarSiguienteCheque()">
+                            <!-- Llenado por JS -->
+                        </select>
+                    </div>
+                    <div>
+                        <label class="font-normal text-gray-600 text-xs">Nro. de Cheque Asignado</label>
+                        <input type="text" id="emit-numero" class="w-full mt-1 border-gray-300 rounded h-9 text-sm font-mono font-bold bg-yellow-50 text-yellow-800" readonly>
+                    </div>
+                    <div>
+                        <label class="font-normal text-gray-600 text-xs">Estado</label>
+                        <input type="text" value="Emitido" class="w-full mt-1 border-gray-300 rounded h-9 text-sm bg-gray-100" readonly>
+                    </div>
+                    <div>
+                        <label class="font-normal text-gray-600 text-xs">Fecha Emisión <span class="required-asterisk">*</span></label>
+                        <input type="date" id="emit-fecha-emision" class="w-full mt-1 border-gray-300 rounded h-9 text-sm">
+                    </div>
+                    <div>
+                        <label class="font-normal text-gray-600 text-xs">Fecha Pago (Para cheques diferidos) <span class="required-asterisk">*</span></label>
+                        <input type="date" id="emit-fecha-pago" class="w-full mt-1 border-gray-300 rounded h-9 text-sm">
+                    </div>
+                </div>
+
+                <div class="flex justify-end gap-3 pt-6 mt-4 border-t">
+                    <button type="button" onclick="document.getElementById('modal-emitir-cheque').classList.add('hidden')" class="px-4 py-2 border rounded text-gray-600 hover:bg-gray-50 bg-white shadow-sm">Cancelar</button>
+                    <button type="button" onclick="confirmarEmisionCheque()" class="bg-blue-600 text-white px-5 py-2 rounded shadow hover:bg-blue-700 font-bold flex items-center gap-2">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 9V7a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2m2 4h10a2 2 0 002-2v-6a2 2 0 00-2-2H9a2 2 0 00-2 2v6a2 2 0 002 2zm7-5a2 2 0 11-4 0 2 2 0 014 0z"></path></svg>
+                        Emitir y Guardar
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+
+    <script>
+        // --- NAVEGACIÓN PRINCIPAL ---
+        function showSection(sectionId) {
+            document.querySelectorAll('main > div > section').forEach(sec => sec.classList.add('hidden'));
+            
+            // Actualizar Título
+            const titles = {
+                'dashboard': 'Dashboard Principal',
+                'documentos': 'Registro de Documentos',
+                'ordenes': 'Gestión de Órdenes de Pago',
+                'cheques': 'Gestión de Cheques y Chequeras'
+            };
+            document.getElementById('header-title').innerText = titles[sectionId] || 'Sistema Yoayu';
+
+            // Mostrar Sección
+            if(document.getElementById('section-' + sectionId)) {
+                document.getElementById('section-' + sectionId).classList.remove('hidden');
+            }
+
+            // Actualizar menú activo
+            document.querySelectorAll('aside a').forEach(a => {
+                a.classList.remove('bg-green-50', 'yoayu-green', 'font-bold', 'border-l-4', 'border-yoayu-green');
+                a.classList.add('text-gray-700');
+            });
+            const activeMenu = event ? event.currentTarget : document.getElementById('menu-cheques');
+            if(activeMenu) {
+                activeMenu.classList.remove('text-gray-700');
+                activeMenu.classList.add('bg-green-50', 'yoayu-green', 'font-bold', 'border-l-4', 'border-yoayu-green');
+            }
+
+            if(sectionId === 'cheques') {
+                renderChequeras();
+                renderChequesEmitidos();
+            }
+        }
+
+        // --- FUNCIONES NC/ND (MANTENIDAS) ---
+        function toggleNotaCreditoFields() {
+            const tipoDoc = document.getElementById('fac-tipo-doc').value;
+            const container = document.getElementById('fac-relacionado-container');
+            if (tipoDoc === 'Nota de Crédito' || tipoDoc === 'Nota de Débito') {
+                container.classList.remove('hidden');
+            } else {
+                container.classList.add('hidden');
+                document.getElementById('fac-doc-relacionado').value = '';
+            }
+        }
+
+        function openRelacionarFacturaModal() {
+            document.getElementById('modal-facturas-relacionar').classList.remove('hidden');
+        }
+
+        function seleccionarFacturaRelacionada(factura) {
+            document.getElementById('fac-doc-relacionado').value = factura;
+            document.getElementById('modal-facturas-relacionar').classList.add('hidden');
+        }
+
+        // ==========================================
+        // MÓDULO DE CHEQUES (NUEVO)
+        // ==========================================
+
+        // Base de Datos Mock
+        let MOCK_CHEQUERAS = [
+            { id_chequera: 1, cuenta_bancaria: 'BNF - Cta: 123456/7', tipo: 'Vista/Corriente', serie: 'A', nro_inicial: 101, nro_final: 200, ultimo_usado: 102, estado: 'Activa' },
+            { id_chequera: 2, cuenta_bancaria: 'Itaú - Cta: 987654321', tipo: 'Diferida', serie: '', nro_inicial: 501, nro_final: 550, ultimo_usado: 500, estado: 'Activa' },
+            { id_chequera: 3, cuenta_bancaria: 'BNF - Cta: 123456/7', tipo: 'Vista/Corriente', serie: '', nro_inicial: 1, nro_final: 100, ultimo_usado: 100, estado: 'Agotada' }
+        ];
+
+        let MOCK_CHEQUES = [
+            { id_cheque: 1, id_chequera: 1, op_ref: 'OP-2026-000', nro_cheque: 101, beneficiario: 'LIMPIEZA TOTAL SA', monto: 1500000, f_emision: '2026-03-10', f_pago: '2026-03-10', estado: 'Cobrado' },
+            { id_cheque: 2, id_chequera: 1, op_ref: 'OP-2026-002', nro_cheque: 102, beneficiario: 'SERVICIOS INFORMATICOS SRL', monto: 12000000, f_emision: '2026-03-15', f_pago: '2026-03-15', estado: 'Emitido' }
+        ];
+
+        // Cambiar Tabs dentro del Módulo de Cheques
+        function switchChequeTab(tabId) {
+            document.getElementById('content-chequeras').classList.add('hidden');
+            document.getElementById('content-emitidos').classList.add('hidden');
+            
+            document.getElementById('tab-chequeras').className = 'border-transparent tab-inactive whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm flex items-center gap-2';
+            document.getElementById('tab-emitidos').className = 'border-transparent tab-inactive whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm flex items-center gap-2';
+
+            document.getElementById('content-' + tabId).classList.remove('hidden');
+            document.getElementById('tab-' + tabId).className = 'tab-active whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm flex items-center gap-2';
+        }
+
+        // Renderizar Tabla Chequeras
+        function renderChequeras() {
+            const tbody = document.getElementById('tabla-chequeras-body');
+            tbody.innerHTML = '';
+            MOCK_CHEQUERAS.forEach(chq => {
+                let badgeColor = chq.estado === 'Activa' ? 'bg-green-100 text-green-800' : (chq.estado === 'Agotada' ? 'bg-gray-200 text-gray-600' : 'bg-red-100 text-red-800');
+                let rango = `${chq.serie ? chq.serie+'-' : ''}${chq.nro_inicial} al ${chq.nro_final}`;
+                let ultUsadoTxt = chq.ultimo_usado < chq.nro_inicial ? '(Ninguno)' : chq.ultimo_usado;
+
+                tbody.insertAdjacentHTML('beforeend', `
+                    <tr class="hover:bg-gray-50">
+                        <td class="p-3 font-mono text-gray-500 text-xs">#${chq.id_chequera}</td>
+                        <td class="p-3 font-medium text-gray-800">${chq.cuenta_bancaria}</td>
+                        <td class="p-3">${chq.tipo}</td>
+                        <td class="p-3 font-mono">${chq.serie || '-'}</td>
+                        <td class="p-3 text-center font-mono bg-gray-50">${rango}</td>
+                        <td class="p-3 text-center font-bold text-blue-700">${ultUsadoTxt}</td>
+                        <td class="p-3 text-center">
+                            <span class="px-2 py-1 rounded text-xs font-bold ${badgeColor}">${chq.estado}</span>
+                        </td>
+                    </tr>
+                `);
+            });
+
+            // Actualizar Filtro de Chequeras en la Pestaña "Emitidos"
+            const filterSelect = document.getElementById('filtro-cheque-chequera');
+            if (filterSelect) {
+                const currentVal = filterSelect.value;
+                filterSelect.innerHTML = '<option value="">Todas las chequeras</option>';
+                MOCK_CHEQUERAS.forEach(c => {
+                    filterSelect.insertAdjacentHTML('beforeend', `<option value="${c.id_chequera}">#${c.id_chequera} - ${c.cuenta_bancaria} (${c.tipo})</option>`);
+                });
+                filterSelect.value = currentVal;
+            }
+        }
+
+        // Renderizar Tabla Cheques Emitidos
+        function renderChequesEmitidos() {
+            const tbody = document.getElementById('tabla-cheques-body');
+            tbody.innerHTML = '';
+            
+            // Reset checkbox principal
+            const chkAll = document.getElementById('chk-all-cheques');
+            if(chkAll) chkAll.checked = false;
+
+            // Leer Filtros
+            const texto = (document.getElementById('filtro-cheque-texto')?.value || '').toLowerCase();
+            const chequeraId = document.getElementById('filtro-cheque-chequera')?.value;
+            const estado = document.getElementById('filtro-cheque-estado')?.value;
+
+            // Aplicar Filtros
+            const chequesFiltrados = MOCK_CHEQUES.filter(c => {
+                const matchTexto = !texto || c.beneficiario.toLowerCase().includes(texto) || c.nro_cheque.toString().includes(texto);
+                const matchChequera = !chequeraId || c.id_chequera.toString() === chequeraId;
+                const matchEstado = !estado || c.estado === estado;
+                return matchTexto && matchChequera && matchEstado;
+            });
+
+            if(chequesFiltrados.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="9" class="p-6 text-center text-gray-500">No se encontraron cheques con los filtros aplicados.</td></tr>';
+                return;
+            }
+
+            chequesFiltrados.forEach(c => {
+                let badge = c.estado === 'Emitido' ? 'bg-blue-100 text-blue-800' : (c.estado === 'Cobrado' ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800');
+                
+                // Botón anular (Solo si está "Emitido")
+                let btnAnular = c.estado === 'Emitido' ? `<button onclick="anularCheque(${c.id_cheque})" class="text-[10px] bg-white border border-red-200 text-red-500 hover:bg-red-50 hover:text-red-700 px-2 py-1.5 rounded shadow-sm font-bold flex items-center justify-center transition-colors" title="Anular Cheque"><svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2m7-2a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg></button>` : '';
+
+                tbody.insertAdjacentHTML('beforeend', `
+                    <tr class="hover:bg-gray-50 ${c.estado === 'Anulado' ? 'opacity-50' : ''}">
+                        <td class="p-3 text-center">
+                            <input type="checkbox" class="chk-cheque rounded text-yoayu-green focus:ring-yoayu-green cursor-pointer w-4 h-4" value="${c.id_cheque}">
+                        </td>
+                        <td class="p-3 font-mono font-bold text-gray-800">${c.nro_cheque}</td>
+                        <td class="p-3 text-xs font-mono text-gray-500">${c.op_ref}</td>
+                        <td class="p-3 font-medium text-gray-800">${c.beneficiario}</td>
+                        <td class="p-3 text-gray-600">${c.f_emision}</td>
+                        <td class="p-3 text-gray-600">${c.f_pago}</td>
+                        <td class="p-3 text-right font-bold text-gray-800">${c.monto.toLocaleString('es-PY')} Gs</td>
+                        <td class="p-3 text-center">
+                            <span class="px-2 py-1 rounded text-xs font-bold ${badge}">${c.estado}</span>
+                        </td>
+                        <td class="p-3 text-center flex justify-center gap-1.5 items-center">
+                            ${btnAnular}
+                            <button onclick="imprimirCheque(${c.id_cheque})" class="text-[10px] bg-gray-100 border border-gray-300 text-gray-700 hover:bg-gray-200 px-3 py-1.5 rounded shadow-sm font-bold flex items-center justify-center transition-colors" title="Imprimir Cheque / Comprobante">
+                                <svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 17h2v2h-2zm0-4h2v2h-2zm0-4h2v2h-2zm-6 10h2v2h-2zm0-4h2v2h-2zm0-4h2v2h-2zm-4 4h2v2H7zm0-4h2v2H7z"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 9H7a2 2 0 00-2 2v6a2 2 0 002 2h10a2 2 0 002-2v-6a2 2 0 00-2-2zM7 9V5a2 2 0 012-2h6a2 2 0 012 2v4"></path></svg>
+                                Imprimir
+                            </button>
+                        </td>
+                    </tr>
+                `);
+            });
+        }
+
+        // --- FUNCIONES DE IMPRESIÓN Y ACCIONES ---
+
+        // Anular cheque
+        function anularCheque(idCheque) {
+            if(confirm("¿Está seguro que desea ANULAR este cheque? Esta acción no se puede deshacer y el número de cheque quedará invalidado.")) {
+                const cheque = MOCK_CHEQUES.find(c => c.id_cheque === idCheque);
+                if(cheque) {
+                    cheque.estado = 'Anulado';
+                    renderChequesEmitidos();
+                    alert("El cheque Nro " + cheque.nro_cheque + " ha sido anulado exitosamente.");
+                }
+            }
+        }
+
+        // Imprimir cheque individual
+        function imprimirCheque(idCheque) {
+            const cheque = MOCK_CHEQUES.find(c => c.id_cheque === idCheque);
+            if(cheque) {
+                alert(`Generando formato de impresión para el Cheque Nro: ${cheque.nro_cheque}\nBeneficiario: ${cheque.beneficiario}\nMonto: ${cheque.monto.toLocaleString('es-PY')} Gs.\n\n(Enviando a la impresora predeterminada...)`);
+            }
+        }
+
+        // Marcar/Desmarcar todos los checkboxes
+        function toggleAllCheques(source) {
+            const checkboxes = document.querySelectorAll('.chk-cheque');
+            checkboxes.forEach(cb => cb.checked = source.checked);
+        }
+
+        // Imprimir múltiples cheques (Lote)
+        function imprimirChequesSeleccionados() {
+            const checkboxes = document.querySelectorAll('.chk-cheque:checked');
+            if (checkboxes.length === 0) {
+                alert("Atención: Seleccione al menos un cheque de la lista para imprimir.");
+                return;
+            }
+
+            let idsToPrint = [];
+            checkboxes.forEach(cb => idsToPrint.push(parseInt(cb.value)));
+
+            const chequesToPrint = MOCK_CHEQUES.filter(c => idsToPrint.includes(c.id_cheque));
+            
+            let msg = `Generando formato de impresión por lote (${chequesToPrint.length} cheques):\n\n`;
+            chequesToPrint.forEach(c => {
+                msg += `- Chq. Nro: ${c.nro_cheque} | Benef.: ${c.beneficiario} | ${c.monto.toLocaleString('es-PY')} Gs.\n`;
+            });
+            msg += `\n(Enviando lote completo a la impresora predeterminada...)`;
+
+            alert(msg);
+        }
+
+        // Guardar Nueva Chequera
+        function guardarChequera() {
+            const ctaSelect = document.getElementById('chq-cuenta');
+            const ctaTexto = ctaSelect.options[ctaSelect.selectedIndex].text;
+            const tipo = document.getElementById('chq-tipo').value;
+            const serie = document.getElementById('chq-serie').value;
+            const ini = parseInt(document.getElementById('chq-inicial').value);
+            const fin = parseInt(document.getElementById('chq-final').value);
+
+            if(!ini || !fin || ini >= fin) {
+                alert("Verifique la numeración inicial y final."); return;
+            }
+
+            const nuevaChequera = {
+                id_chequera: MOCK_CHEQUERAS.length + 1,
+                cuenta_bancaria: ctaTexto,
+                tipo: tipo,
+                serie: serie,
+                nro_inicial: ini,
+                nro_final: fin,
+                ultimo_usado: ini - 1, // El anterior al inicial
+                estado: 'Activa'
+            };
+
+            MOCK_CHEQUERAS.push(nuevaChequera);
+            renderChequeras();
+            document.getElementById('modal-chequera').classList.add('hidden');
+            document.getElementById('form-chequera').reset();
+            alert("Chequera configurada correctamente.");
+        }
+
+        // Abrir Modal para emitir cheque (Desde la tabla de Órdenes de Pago)
+        function abrirModalEmitirCheque(opId, beneficiario, monto) {
+            document.getElementById('emit-op').innerText = opId;
+            document.getElementById('emit-monto').innerText = monto.toLocaleString('es-PY') + " Gs";
+            document.getElementById('emit-beneficiario').value = beneficiario;
+            
+            // Setear fechas por defecto
+            const hoy = new Date().toISOString().split('T')[0];
+            document.getElementById('emit-fecha-emision').value = hoy;
+            document.getElementById('emit-fecha-pago').value = hoy;
+
+            // Llenar select de chequeras ACTIVAS
+            const select = document.getElementById('emit-chequera');
+            select.innerHTML = '';
+            const activas = MOCK_CHEQUERAS.filter(c => c.estado === 'Activa');
+            
+            if(activas.length === 0) {
+                alert("No hay chequeras activas disponibles. Registre una en la Gestión de Cheques.");
+                return;
+            }
+
+            activas.forEach(c => {
+                let text = `ID #${c.id_chequera} - ${c.cuenta_bancaria} (${c.tipo})`;
+                select.insertAdjacentHTML('beforeend', `<option value="${c.id_chequera}">${text}</option>`);
+            });
+
+            actualizarSiguienteCheque();
+            document.getElementById('modal-emitir-cheque').classList.remove('hidden');
+        }
+
+        // Calcular dinámicamente el siguiente nro de cheque según la chequera seleccionada
+        function actualizarSiguienteCheque() {
+            const idChequera = parseInt(document.getElementById('emit-chequera').value);
+            const chq = MOCK_CHEQUERAS.find(c => c.id_chequera === idChequera);
+            if(chq) {
+                const siguiente = chq.ultimo_usado + 1;
+                let serieFormat = chq.serie ? chq.serie + "-" : "";
+                document.getElementById('emit-numero').value = serieFormat + siguiente.toString().padStart(5, '0');
+            }
+        }
+
+        // Confirmar la emisión del cheque
+        function confirmarEmisionCheque() {
+            const idChequera = parseInt(document.getElementById('emit-chequera').value);
+            const opRef = document.getElementById('emit-op').innerText;
+            const bene = document.getElementById('emit-beneficiario').value;
+            const montoTexto = document.getElementById('emit-monto').innerText.replace(/\D/g, '');
+            const femision = document.getElementById('emit-fecha-emision').value;
+            const fpago = document.getElementById('emit-fecha-pago').value;
+
+            const chq = MOCK_CHEQUERAS.find(c => c.id_chequera === idChequera);
+            const numeroAEmitir = chq.ultimo_usado + 1;
+
+            if(numeroAEmitir > chq.nro_final) {
+                alert("Error: Esta chequera ya no tiene cheques disponibles (Agotada).");
+                return;
+            }
+
+            // Registrar cheque
+            MOCK_CHEQUES.push({
+                id_cheque: MOCK_CHEQUES.length + 1,
+                id_chequera: idChequera,
+                op_ref: opRef,
+                nro_cheque: numeroAEmitir,
+                beneficiario: bene,
+                monto: parseInt(montoTexto),
+                f_emision: femision,
+                f_pago: fpago,
+                estado: 'Emitido'
+            });
+
+            // Actualizar Chequera
+            chq.ultimo_usado = numeroAEmitir;
+            if(chq.ultimo_usado === chq.nro_final) {
+                chq.estado = 'Agotada';
+            }
+
+            alert(`Cheque Nro ${numeroAEmitir} emitido con éxito para la OP ${opRef}`);
+            document.getElementById('modal-emitir-cheque').classList.add('hidden');
+            
+            // Opcional: Navegar a la pestaña de cheques emitidos para verlo
+            showSection('cheques');
+            switchChequeTab('emitidos');
+        }
+
+        // Iniciar en la sección de Órdenes (para el ejemplo del prototipo)
+        document.addEventListener("DOMContentLoaded", () => {
+            showSection('ordenes');
+        });
+    </script>
+</body>
+</html>
